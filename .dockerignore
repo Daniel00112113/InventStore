@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+.env
+.git
+.gitignore
+*.db
+*.log
+README.md
+ARCHITECTURE.md
+DEPLOYMENT.md
+TESTING.md
+CONTRIBUTING.md
+CHANGELOG.md

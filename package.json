@@ -1,0 +1,43 @@
+{
+  "name": "tienda-barrio-saas",
+  "version": "1.0.0",
+  "description": "Sistema SaaS multi-tenant para tiendas de barrio en Colombia",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "node --watch server/index.js",
+    "start": "node server/index.js",
+    "db:setup": "node server/db/setup.js",
+    "db:migrate": "node server/db/migrate.js",
+    "db:migrate:gerente": "node server/db/run-gerente-migration.js",
+    "db:create-gerente": "node server/db/create-gerente.js",
+    "db:reset": "rm -f database.db && npm run db:setup",
+    "test": "echo \"Ver TESTING.md para guía de pruebas\" && exit 0"
+  },
+  "keywords": [
+    "saas",
+    "multi-tenant",
+    "inventory",
+    "pos",
+    "tienda",
+    "colombia"
+  ],
+  "author": "Tu Nombre",
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "better-sqlite3": "^9.2.2",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "exceljs": "^4.3.0",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.9.7",
+    "pdfkit": "^0.13.0",
+    "twilio": "^4.19.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>InvenStore - Sistema de Gestión</title>
+    <link rel="stylesheet" href="styles.css?v=2.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <div id="login-screen" class="screen">
+            <div class="login-container">
+                <div class="login-logo">
+                    <img src="assets/images/logo.png" alt="InvenStore Logo" class="logo-image">
+                    <img src="assets/images/letras.png" alt="InvenStore" class="logo-text-image">
+                </div>
+                <p class="login-subtitle">Sistema de Gestión para Tiendas</p>
+                <form id="login-form">
+                    <input type="text" id="username" placeholder="Usuario" required>
+                    <input type="password" id="password" placeholder="Contraseña" required>
+                    <button type="submit" class="btn-primary">Ingresar</button>
+                </form>
+                <div id="login-error" class="error"></div>
+            </div>
+        </div>
+
+        <div id="dashboard-screen" class="screen hidden">
+            <nav class="navbar">
+                <div class="navbar-brand">
+                    <img src="assets/images/logo.png" alt="InvenStore Logo" class="navbar-logo">
+                    <img src="assets/images/letras.png" alt="InvenStore" class="navbar-text">
+                </div>
+                <div class="navbar-actions">
+                    <button id="dark-mode-toggle" class="btn-icon">🌙</button>
+                    <span id="user-name"></span>
+                    <button id="logout-btn" class="btn-secondary">Salir</button>
+                </div>
+            </nav>
+
+            <div class="menu">
+                <button class="menu-btn active" data-view="dashboard">📊 Dashboard</button>
+                <button class="menu-btn" data-view="sales">💰 Ventas</button>
+                <button class="menu-btn" data-view="invoices">📄 Facturas</button>
+                <button class="menu-btn" data-view="products">📦 Productos</button>
+                <button class="menu-btn" data-view="categories">🏷️ Categorías</button>
+                <button class="menu-btn" data-view="customers">👥 Clientes</button>
+                <button class="menu-btn" data-view="returns">🔄 Devoluciones</button>
+                <button class="menu-btn" data-view="cash-register">💰 Cierre de Caja</button>
+                <button class="menu-btn" data-view="reports">📈 Reportes</button>
+                <button class="menu-btn" data-view="users" id="users-menu-btn">👤 Usuarios</button>
+            </div>
+
+            <div class="content">
+                <div id="dashboard-view" class="view">
+                    <h2>Dashboard</h2>
+                    <div class="metrics">
+                        <div class="metric-card">
+                            <h3>Ventas Hoy</h3>
+                            <p class="metric-value" id="daily-sales">$0</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Ventas Mes</h3>
+                            <p class="metric-value" id="monthly-sales">$0</p>
+                        </div>
+                        <div class="metric-card">
+                            <h3>Ganancia Mes</h3>
+                            <p class="metric-value" id="monthly-profit">$0</p>
+                        </div>
+                        <div class="metric-card alert">
+                            <h3>Stock Bajo</h3>
+                            <p class="metric-value" id="low-stock">0</p>
+                        </div>
+                        <div class="metric-card warning">
+                            <h3>Fiado Pendiente</h3>
+                            <p class="metric-value" id="pending-credit">$0</p>
+                        </div>
+                    </div>
+
+                    <div class="charts-container">
+                        <div class="chart-card">
+                            <h3>📊 Ventas de los Últimos 7 Días</h3>
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>🏆 Productos Más Vendidos</h3>
+                            <canvas id="topProductsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sales-view" class="view hidden">
+                    <h2>Nueva Venta</h2>
+                    <div class="sale-container">
+                        <div class="product-search-section">
+                            <h3>Buscar Productos</h3>
+                            <input type="text" id="barcode-input"
+                                placeholder="🔍 Buscar por nombre o escanear código de barras">
+                            <div id="product-suggestions" class="product-suggestions"></div>
+                        </div>
+
+                        <div class="cart-section">
+                            <h3>Carrito de Compra</h3>
+                            <div id="sale-items" class="cart-items">
+                                <p class="empty-cart">🛒 Carrito vacío. Agrega productos para comenzar.</p>
+                            </div>
+
+                            <div class="sale-total-section">
+                                <div class="total-display">
+                                    <div class="total-row total-final">
+                                        <span>Total:</span>
+                                        <span class="total-amount">$<span id="sale-total">0</span></span>
+                                    </div>
+                                </div>
+
+                                <select id="payment-type" class="payment-select">
+                                    <option value="efectivo">💵 Efectivo</option>
+                                    <option value="fiado">📝 Fiado</option>
+                                    <option value="mixto">💵📝 Mixto (Efectivo + Fiado)</option>
+                                    <option value="multiple">💳 Múltiples Métodos</option>
+                                </select>
+
+                                <select id="customer-select" class="hidden customer-select">
+                                    <option value="">Seleccionar cliente</option>
+                                </select>
+
+                                <div id="mixed-payment-section" class="hidden mixed-payment">
+                                    <input type="number" id="cash-amount" placeholder="Monto en efectivo" step="0.01"
+                                        min="0">
+                                    <input type="number" id="credit-amount" placeholder="Monto fiado" step="0.01"
+                                        min="0">
+                                </div>
+
+                                <div id="multiple-payment-section" class="hidden multiple-payment">
+                                    <h4>Métodos de Pago</h4>
+                                    <div class="payment-method-item">
+                                        <label><input type="checkbox" class="payment-method-check" value="efectivo">
+                                            Efectivo</label>
+                                        <input type="number" class="payment-method-amount" data-method="efectivo"
+                                            placeholder="Monto" step="0.01" disabled>
+                                    </div>
+                                    <div class="payment-method-item">
+                                        <label><input type="checkbox" class="payment-method-check"
+                                                value="tarjeta_debito"> Tarjeta Débito</label>
+                                        <input type="number" class="payment-method-amount" data-method="tarjeta_debito"
+                                            placeholder="Monto" step="0.01" disabled>
+                                    </div>
+                                    <div class="payment-method-item">
+                                        <label><input type="checkbox" class="payment-method-check"
+                                                value="tarjeta_credito"> Tarjeta Crédito</label>
+                                        <input type="number" class="payment-method-amount" data-method="tarjeta_credito"
+                                            placeholder="Monto" step="0.01" disabled>
+                                    </div>
+                                    <div class="payment-method-item">
+                                        <label><input type="checkbox" class="payment-method-check"
+                                                value="transferencia"> Transferencia</label>
+                                        <input type="number" class="payment-method-amount" data-method="transferencia"
+                                            placeholder="Monto" step="0.01" disabled>
+                                    </div>
+                                    <div class="payment-method-item">
+                                        <label><input type="checkbox" class="payment-method-check" value="nequi">
+                                            Nequi</label>
+                                        <input type="number" class="payment-method-amount" data-method="nequi"
+                                            placeholder="Monto" step="0.01" disabled>
+                                    </div>
+                                    <div class="payment-method-item">
+                                        <label><input type="checkbox" class="payment-method-check" value="daviplata">
+                                            Daviplata</label>
+                                        <input type="number" class="payment-method-amount" data-method="daviplata"
+                                            placeholder="Monto" step="0.01" disabled>
+                                    </div>
+                                    <div class="payment-method-item">
+                                        <label><input type="checkbox" class="payment-method-check" value="fiado">
+                                            Fiado</label>
+                                        <input type="number" class="payment-method-amount" data-method="fiado"
+                                            placeholder="Monto" step="0.01" disabled>
+                                    </div>
+                                    <div class="multiple-payment-total">
+                                        <span>Pagado: $<span id="multiple-payment-sum">0</span></span>
+                                        <span>Falta: $<span id="multiple-payment-remaining">0</span></span>
+                                    </div>
+                                </div>
+
+                                <button id="complete-sale-btn" class="btn-primary btn-complete">✅ Completar
+                                    Venta</button>
+                                <button id="clear-cart-btn" class="btn-secondary btn-clear">🗑️ Limpiar Carrito</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="invoices-view" class="view hidden">
+                    <h2>📄 Historial de Facturas</h2>
+                    <div class="report-filters">
+                        <input type="date" id="invoices-start-date">
+                        <input type="date" id="invoices-end-date">
+                        <button id="filter-invoices-btn" class="btn-primary">Filtrar</button>
+                        <button id="clear-invoices-filter-btn" class="btn-secondary">Limpiar</button>
+                    </div>
+                    <div id="invoices-stats" class="invoices-stats"></div>
+                    <div id="invoices-list"></div>
+                </div>
+
+                <div id="products-view" class="view hidden">
+                    <div class="view-header">
+                        <h2>Productos</h2>
+                        <button id="add-product-btn" class="btn-primary">+ Agregar</button>
+                    </div>
+                    <button id="low-stock-filter" class="btn-secondary">Ver Stock Bajo</button>
+                    <div id="products-list"></div>
+                </div>
+
+                <div id="categories-view" class="view hidden">
+                    <div class="view-header">
+                        <h2>Categorías</h2>
+                        <button id="add-category-btn" class="btn-primary">+ Agregar</button>
+                    </div>
+                    <div id="categories-list"></div>
+                </div>
+
+                <div id="customers-view" class="view hidden">
+                    <div class="view-header">
+                        <h2>Clientes</h2>
+                        <button id="add-customer-btn" class="btn-primary">+ Agregar</button>
+                    </div>
+                    <button id="debt-filter" class="btn-secondary">Ver Con Deuda</button>
+                    <div id="customers-list"></div>
+                </div>
+
+                <div id="returns-view" class="view hidden">
+                    <div class="view-header">
+                        <h2>Devoluciones</h2>
+                        <button id="add-return-btn" class="btn-primary">+ Nueva Devolución</button>
+                    </div>
+                    <div class="report-filters">
+                        <input type="date" id="returns-start-date">
+                        <input type="date" id="returns-end-date">
+                        <button id="filter-returns-btn" class="btn-secondary">Filtrar</button>
+                    </div>
+                    <div id="returns-list"></div>
+                </div>
+
+                <div id="reports-view" class="view hidden">
+                    <h2>Reportes</h2>
+                    <div class="report-filters">
+                        <input type="date" id="report-start-date">
+                        <input type="date" id="report-end-date">
+                        <button id="generate-report-btn" class="btn-primary">Generar</button>
+                        <button id="export-pdf-btn" class="btn-secondary">📄 Exportar PDF</button>
+                        <button id="export-excel-btn" class="btn-secondary">📊 Exportar Excel</button>
+                    </div>
+                    <div id="report-results"></div>
+                </div>
+
+                <div id="cash-register-view" class="view hidden">
+                    <h2>💰 Cierre de Caja</h2>
+                    <div class="cash-register-actions">
+                        <button id="open-closing-modal-btn" class="btn-primary">🔒 Cerrar Caja del Día</button>
+                    </div>
+                    <div class="cash-register-history">
+                        <h3>Historial de Cierres</h3>
+                        <div class="report-filters">
+                            <input type="date" id="closing-start-date">
+                            <input type="date" id="closing-end-date">
+                            <button id="filter-closings-btn" class="btn-secondary">Filtrar</button>
+                        </div>
+                        <div id="closings-list"></div>
+                    </div>
+                </div>
+
+                <!-- Vista de Usuarios -->
+                <div id="users-view" class="view hidden">
+                    <h2>👤 Gestión de Usuarios</h2>
+
+                    <div class="section-header">
+                        <button id="add-user-btn" class="btn-primary">➕ Nuevo Usuario</button>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Nombre Completo</th>
+                                    <th>Rol</th>
+                                    <th>Estado</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <tr>
+                                    <td colspan="6" class="loading">Cargando usuarios...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Usuario -->
+    <div id="user-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="user-modal-title">Nuevo Usuario</h3>
+            <form id="user-form">
+                <div class="form-group">
+                    <label for="user-username">Usuario *</label>
+                    <input type="text" id="user-username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="user-fullname">Nombre Completo *</label>
+                    <input type="text" id="user-fullname" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="user-role">Rol *</label>
+                    <select id="user-role" required>
+                        <option value="">Seleccionar rol</option>
+                        <option value="empleado">Empleado</option>
+                        <option value="gerente" id="gerente-option">Gerente</option>
+                        <option value="admin" id="admin-option">Administrador</option>
+                    </select>
+                    <small class="form-hint">Los gerentes solo pueden crear empleados</small>
+                </div>
+
+                <div class="form-group" id="password-group">
+                    <label for="user-password">Contraseña *</label>
+                    <input type="password" id="user-password" minlength="6">
+                    <small class="form-hint">Mínimo 6 caracteres</small>
+                </div>
+
+                <div class="form-group" id="password-edit-group" class="hidden">
+                    <label>
+                        <input type="checkbox" id="change-password-check">
+                        Cambiar contraseña
+                    </label>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" id="cancel-user-btn" class="btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalle de Factura -->
+    <div id="invoice-detail-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <h3>📄 Detalle de Factura</h3>
+            <div id="invoice-detail-content"></div>
+            <div class="modal-actions">
+                <button id="print-invoice-btn" class="btn-primary">🖨️ Imprimir</button>
+                <button id="close-invoice-detail" class="btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Producto -->
+    <div id="product-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="product-modal-title">Nuevo Producto</h3>
+            <form id="product-form">
+                <input type="hidden" id="product-id">
+                <input type="text" id="product-name" placeholder="Nombre del producto" required>
+
+                <select id="product-presentation" required>
+                    <option value="">Seleccionar presentación</option>
+                    <option value="unidad">📦 Unidad</option>
+                    <option value="suelto">🥄 Suelto/Granel</option>
+                    <option value="paquete">📦 Paquete</option>
+                    <option value="bolsa">🛍️ Bolsa</option>
+                    <option value="caja">📦 Caja</option>
+                    <option value="botella">🍾 Botella</option>
+                    <option value="lata">🥫 Lata</option>
+                    <option value="kilo">⚖️ Kilo</option>
+                    <option value="libra">⚖️ Libra</option>
+                </select>
+
+                <input type="text" id="product-barcode" placeholder="Código de Barras">
+                <select id="product-category" required>
+                    <option value="">Seleccionar categoría</option>
+                </select>
+                <input type="number" id="product-cost" placeholder="Costo" step="0.01" required>
+                <input type="number" id="product-price" placeholder="Precio de Venta" step="0.01" required>
+                <input type="number" id="product-stock" placeholder="Stock Inicial" required>
+                <input type="number" id="product-min-stock" placeholder="Stock Mínimo" required>
+
+                <!-- Campos opcionales -->
+                <select id="product-unit-type">
+                    <option value="">Tipo de unidad (opcional)</option>
+                    <option value="unidad">Unidad</option>
+                    <option value="paquete">Paquete</option>
+                    <option value="caja">Caja</option>
+                </select>
+                <input type="number" id="product-units-per-pack" placeholder="Unidades por paquete (opcional)" step="1">
+                <input type="number" id="product-pack-price" placeholder="Precio por paquete (opcional)" step="0.01">
+                <input type="number" id="product-wholesale-qty" placeholder="Cantidad mayorista (opcional)" step="1">
+                <input type="number" id="product-wholesale-price" placeholder="Precio mayorista (opcional)" step="0.01">
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" id="cancel-product-btn" class="btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Categoría -->
+    <div id="category-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="category-modal-title">Nueva Categoría</h3>
+            <form id="category-form">
+                <input type="hidden" id="category-id">
+                <input type="text" id="category-name" placeholder="Nombre de la categoría" required>
+                <textarea id="category-description" placeholder="Descripción (opcional)"></textarea>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" id="cancel-category-btn" class="btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Cliente -->
+    <div id="customer-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3 id="customer-modal-title">Nuevo Cliente</h3>
+            <form id="customer-form">
+                <input type="hidden" id="customer-id">
+                <input type="text" id="customer-name" placeholder="Nombre completo" required>
+                <input type="tel" id="customer-phone" placeholder="Teléfono">
+                <input type="email" id="customer-email" placeholder="Email">
+                <textarea id="customer-address" placeholder="Dirección"></textarea>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Guardar</button>
+                    <button type="button" id="cancel-customer-btn" class="btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Devolución -->
+    <div id="return-modal" class="modal hidden">
+        <div class="modal-content modal-large">
+            <h3>🔄 Nueva Devolución</h3>
+            <form id="return-form">
+                <div class="return-search-section">
+                    <h4>Buscar Venta</h4>
+                    <input type="number" id="return-sale-id" placeholder="ID de Venta">
+                    <input type="number" id="return-customer-id" placeholder="ID de Cliente">
+                    <button type="button" id="search-sales-btn" class="btn-secondary">Buscar</button>
+                </div>
+                <div id="return-sales-results"></div>
+                <div id="return-items-section" class="hidden">
+                    <h4>Productos a Devolver</h4>
+                    <div id="return-items-list"></div>
+                    <textarea id="return-reason" placeholder="Motivo de la devolución" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary" id="submit-return-btn" disabled>Procesar
+                        Devolución</button>
+                    <button type="button" id="cancel-return-btn" class="btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Cierre de Caja -->
+    <div id="closing-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>🔒 Cerrar Caja del Día</h3>
+            <form id="closing-form">
+                <div class="closing-summary" id="closing-summary">
+                    <h4 id="closing-date"></h4>
+                    <div class="summary-row">
+                        <span>💵 Efectivo Esperado:</span>
+                        <span>$<span id="expected-cash">0</span></span>
+                    </div>
+                    <div class="summary-row">
+                        <span>📝 Ventas a Crédito:</span>
+                        <span>$<span id="credit-sales">0</span></span>
+                    </div>
+                    <div class="summary-row">
+                        <span>🧾 Total Transacciones:</span>
+                        <span id="total-transactions">0</span>
+                    </div>
+                </div>
+                <input type="number" id="actual-cash" placeholder="Efectivo contado en caja" step="0.01" required>
+                <div id="difference-display" class="hidden">
+                    <span id="difference-label"></span>
+                    <span>$<span id="difference-amount">0</span></span>
+                </div>
+                <textarea id="closing-notes" placeholder="Notas adicionales (opcional)"></textarea>
+                <div class="modal-actions">
+                    <button type="submit" class="btn-primary">Confirmar Cierre</button>
+                    <button type="button" id="cancel-closing-btn" class="btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalle de Cierre -->
+    <div id="closing-detail-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>📋 Detalle del Cierre</h3>
+            <div id="closing-detail-content"></div>
+            <div class="modal-actions">
+                <button id="export-closing-btn" class="btn-primary">📥 Exportar</button>
+                <button id="close-closing-detail" class="btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Venta Exitosa -->
+    <div id="sale-success-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>✅ Venta Completada</h3>
+            <p style="text-align: center; font-size: 18px; margin: 20px 0;">
+                La venta se ha registrado exitosamente
+            </p>
+            <div class="modal-actions">
+                <button id="print-ticket-btn" class="btn-primary">🖨️ Imprimir Ticket</button>
+                <button id="close-success-modal" class="btn-secondary">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="loading.js"></script>
+    <script src="notifications.js"></script>
+    <script src="api.js"></script>
+    <script src="error-handler.js"></script>
+    <script src="modal-handlers.js"></script>
+    <script src="app.js?v=2.3"></script>
+    <script src="dashboard-charts.js"></script>
+    <script src="users.js?v=1.2"></script>
+    <script src="test-modals.js"></script>
+</body>
+
+</html>
