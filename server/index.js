@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import authRoutes from './routes/auth.js';
+import registerRoutes from './routes/register.js';
 import dashboardRoutes from './routes/dashboard.js';
 import productsRoutes from './routes/products.js';
 import salesRoutes from './routes/sales.js';
@@ -93,6 +94,7 @@ app.use(express.static(join(__dirname, '../client'), {
 
 // Rutas API
 app.use('/api/auth', authRoutes);
+app.use('/api/register', registerRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/sales', salesRoutes);
