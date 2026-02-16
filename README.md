@@ -278,28 +278,31 @@ idx_sales_date (store_id, created_at)
 
 ## 🚀 Despliegue
 
-### Fly.io (Recomendado - Gratis hasta $5/mes)
+### Render.com (Recomendado - 100% GRATIS, sin tarjeta)
 
 ```bash
-# Setup rápido
-./deploy-flyio.sh setup
+# 1. Sube tu código a GitHub (ya hecho)
+git push origin main
 
-# O manualmente:
-fly launch
-fly volumes create tienda_data --size 1
-fly secrets set JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
-fly deploy
+# 2. Ve a https://render.com y crea cuenta con GitHub
+# 3. New + → Web Service → Conecta tu repo
+# 4. Configura y despliega (5 minutos)
 ```
 
-📖 **[Ver guía completa de Fly.io →](DEPLOYMENT_FLYIO.md)**  
-📋 **[Configuración rápida para dashboard →](FLYIO_CONFIG.md)**
+📖 **[Ver guía completa de Render →](DEPLOYMENT_RENDER.md)**  
+🎁 **[Guía de despliegue gratis →](DESPLIEGUE_GRATIS.md)**
 
 ### Otras Plataformas
 
-Ver [DEPLOYMENT.md](DEPLOYMENT.md) para guías detalladas de:
+**Fly.io** (Requiere tarjeta, pero gratis hasta $5/mes):
+- [Guía completa de Fly.io](DEPLOYMENT_FLYIO.md)
+- [Configuración rápida](FLYIO_CONFIG.md)
+
+**Otras opciones**:
+Ver [DEPLOYMENT.md](DEPLOYMENT.md) para:
 - VPS (Ubuntu/Debian)
-- Heroku
-- Railway/Render
+- Railway
+- Vercel
 - Configuración de Nginx
 - SSL con Let's Encrypt
 - PM2 para producción
