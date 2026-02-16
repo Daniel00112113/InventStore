@@ -47,6 +47,7 @@ PASO 4: VARIABLES DE ENTORNO
 
 Haz clic en "Advanced" y agrega estas variables:
 
+NODE_VERSION=20.18.1
 NODE_ENV=production
 PORT=10000
 DB_PATH=/opt/render/project/src/database.db

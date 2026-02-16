@@ -6,6 +6,8 @@ services:
     buildCommand: npm install
     startCommand: npm run db:setup && npm start
     envVars:
+      - key: NODE_VERSION
+        value: 20.18.1
       - key: NODE_ENV
         value: production
       - key: PORT
