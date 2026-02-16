@@ -29,6 +29,8 @@ let returnsViewInitialized = false;
 let invoicesViewInitialized = false;
 let returnItems = [];
 let selectedSaleId = null;
+let cashRegisterViewInitialized = false;
+let currentClosingSummary = null;
 
 const loginScreen = document.getElementById('login-screen');
 const dashboardScreen = document.getElementById('dashboard-screen');
@@ -1078,8 +1080,6 @@ function initReportsEventListeners() {
     }
 }
 // ===== CIERRE DE CAJA =====
-let cashRegisterViewInitialized = false;
-let currentClosingSummary = null;
 
 function initCashRegisterEventListeners() {
     const openClosingModalBtn = document.getElementById('open-closing-modal-btn');
