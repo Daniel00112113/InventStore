@@ -39,38 +39,42 @@ router.post('/validate-code', async (req, res) => {
 
 // Registro con código de invitación
 router.post('/register', async (req, res) => {
-    const transaction = db.transaction(() => {
-        try {
-            const {
-                invitationCode,
-                username,
-                password,
-                fullName,
-                storeName,
-                ownerName,
-                ownerPhone,
-                ownerAddress
-            } = req.body;
+    try {
+        const {
+            invitationCode,
+            username,
+            password,
+            fullName,
+            storeName,
+            ownerName,
+            ownerPhone,
+            ownerAddress
+        } = req.body;
 
-            // Validaciones
-            if (!invitationCode || !username || !password || !fullName || !storeName || !ownerName) {
-                throw new Error('Todos los campos obligatorios son requeridos');
-            }
+        // Validaciones
+        if (!invitationCode || !username || !password || !fullName || !storeName || !ownerName) {
+            return res.status(400).json({ error: 'Todos los campos obligatorios son requeridos' });
+        }
 
-            if (password.length < 6) {
-                throw new Error('La contraseña debe tener al menos 6 caracteres');
-            }
+        if (password.length < 6) {
+            return res.status(400).json({ error: 'La contraseña debe tener al menos 6 caracteres' });
+        }
 
-            // Verificar código de invitación
-            const invitation = db.prepare(`
-        SELECT * FROM invitation_codes 
-        WHERE code = ? AND used = 0 AND (expires_at IS NULL OR expires_at > datetime('now'))
-      `).get(invitationCode.toUpperCase());
+        // Verificar código de invitación
+        const invitation = db.prepare(`
+      SELECT * FROM invitation_codes 
+      WHERE code = ? AND used = 0 AND (expires_at IS NULL OR expires_at > datetime('now'))
+    `).get(invitationCode.toUpperCase());
 
-            if (!invitation) {
-                throw new Error('Código de invitación inválido o expirado');
-            }
+        if (!invitation) {
+            return res.status(400).json({ error: 'Código de invitación inválido o expirado' });
+        }
 
+        // Hash de la contraseña antes de la transacción
+        const passwordHash = await bcrypt.hash(password, 10);
+
+        // Ejecutar transacción
+        const transaction = db.transaction(() => {
             // Crear la tienda
             const storeResult = db.prepare(`
         INSERT INTO stores (name, owner_name, phone, address)
@@ -89,8 +93,6 @@ router.post('/register', async (req, res) => {
             }
 
             // Crear el usuario administrador
-            const passwordHash = await bcrypt.hash(password, 10);
-
             const userResult = db.prepare(`
         INSERT INTO users (store_id, username, password_hash, full_name, role)
         VALUES (?, ?, ?, ?, 'admin')
@@ -123,38 +125,35 @@ router.post('/register', async (req, res) => {
                 insertCategory.run(storeId, categoryName, `Categoría ${categoryName}`);
             });
 
-            // Generar token JWT
-            const token = jwt.sign(
-                {
-                    userId,
-                    storeId,
-                    username,
-                    role: 'admin'
-                },
-                process.env.JWT_SECRET || 'your-secret-key',
-                { expiresIn: '24h' }
-            );
+            return { userId, storeId, storeName };
+        });
 
-            return {
-                token,
-                user: {
-                    id: userId,
-                    username,
-                    fullName,
-                    role: 'admin',
-                    storeId,
-                    storeName
-                }
-            };
-
-        } catch (error) {
-            throw error;
-        }
-    });
-
-    try {
         const result = transaction();
-        res.status(201).json(result);
+
+        // Generar token JWT
+        const token = jwt.sign(
+            {
+                userId: result.userId,
+                storeId: result.storeId,
+                username,
+                role: 'admin'
+            },
+            process.env.JWT_SECRET || 'your-secret-key',
+            { expiresIn: '24h' }
+        );
+
+        res.status(201).json({
+            token,
+            user: {
+                id: result.userId,
+                username,
+                fullName,
+                role: 'admin',
+                storeId: result.storeId,
+                storeName: result.storeName
+            }
+        });
+
     } catch (error) {
         console.error('Registration error:', error);
         res.status(400).json({ error: error.message });
