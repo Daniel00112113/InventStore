@@ -278,6 +278,24 @@ idx_sales_date (store_id, created_at)
 
 ## 🚀 Despliegue
 
+### Fly.io (Recomendado - Gratis hasta $5/mes)
+
+```bash
+# Setup rápido
+./deploy-flyio.sh setup
+
+# O manualmente:
+fly launch
+fly volumes create tienda_data --size 1
+fly secrets set JWT_SECRET=$(node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
+fly deploy
+```
+
+📖 **[Ver guía completa de Fly.io →](DEPLOYMENT_FLYIO.md)**  
+📋 **[Configuración rápida para dashboard →](FLYIO_CONFIG.md)**
+
+### Otras Plataformas
+
 Ver [DEPLOYMENT.md](DEPLOYMENT.md) para guías detalladas de:
 - VPS (Ubuntu/Debian)
 - Heroku

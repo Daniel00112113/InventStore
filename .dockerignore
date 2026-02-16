@@ -4,6 +4,8 @@ npm-debug.log
 .git
 .gitignore
 *.db
+*.db-shm
+*.db-wal
 *.log
 README.md
 ARCHITECTURE.md
@@ -11,3 +13,10 @@ DEPLOYMENT.md
 TESTING.md
 CONTRIBUTING.md
 CHANGELOG.md
+.kiro
+.vscode
+backups
+client/client-backup-*
+*.md
+!server/**/*.md
+!client/modules/README.md

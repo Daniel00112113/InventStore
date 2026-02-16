@@ -125,6 +125,10 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', version: '2.0.0' });
 });
 
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', version: '2.0.0', timestamp: new Date().toISOString() });
+});
+
 // Ruta catch-all para SPA
 app.get('*', (req, res) => {
     res.sendFile(join(__dirname, '../client/index.html'));

@@ -1,0 +1,194 @@
+=================================================================
+CONFIGURACIÓN PARA EL DASHBOARD DE FLY.IO
+=================================================================
+
+Basándome en la interfaz que estás viendo, aquí está la configuración:
+
+-----------------------------------------------------------------
+1. INFORMACIÓN BÁSICA
+-----------------------------------------------------------------
+Nombre de la aplicación: tienda-inventario
+Organización: Personal
+Sucursal: Selecciona una de estas (recomendadas para Colombia):
+  - iad (Ashburn, Virginia) - RECOMENDADO
+  - gru (São Paulo, Brasil) - Más cercano
+  - mia (Miami, Florida) - Buena opción
+
+-----------------------------------------------------------------
+2. PUERTO INTERNO
+-----------------------------------------------------------------
+Puerto interno: 3000
+
+-----------------------------------------------------------------
+3. TAMAÑOS DE MÁQUINA
+-----------------------------------------------------------------
+Selecciona: CPU compartida 1x
+Memoria: 256 MB (mínimo) o 512 MB (recomendado)
+
+-----------------------------------------------------------------
+4. VARIABLES DE ENTORNO
+-----------------------------------------------------------------
+
+IMPORTANTE: Antes de desplegar, necesitas configurar estas variables:
+
+A) Variables SECRETAS (no las pongas en el formulario público):
+   Después de crear la app, ve a: Dashboard → Secrets
+
+   JWT_SECRET
+   Valor: Genera uno con este comando en tu terminal:
+   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+   
+   ALLOWED_ORIGINS
+   Valor: https://tienda-inventario.fly.dev
+   (Reemplaza con el nombre real de tu app)
+
+B) Variables públicas (ya están en fly.toml, no necesitas agregarlas):
+   - NODE_ENV=production
+   - PORT=3000
+   - DB_PATH=/data/database.db
+   - BACKUP_ENABLED=true
+   - BACKUP_HOUR=2
+   - BACKUP_RETENTION_DAYS=30
+   - RATE_LIMIT_WINDOW_MS=60000
+   - RATE_LIMIT_MAX_REQUESTS=100
+   - LOG_LEVEL=info
+
+-----------------------------------------------------------------
+5. BASE DE DATOS (VOLUMEN)
+-----------------------------------------------------------------
+
+CRÍTICO: Antes de hacer clic en "Implementar", debes crear un volumen.
+
+Abre una terminal y ejecuta:
+
+fly auth login
+fly volumes create tienda_data --region iad --size 1
+
+(Usa la misma región que seleccionaste arriba)
+
+-----------------------------------------------------------------
+6. DIRECTORIO DE TRABAJO
+-----------------------------------------------------------------
+Déjalo vacío (usa la raíz del proyecto)
+
+-----------------------------------------------------------------
+7. RUTA DE CONFIGURACIÓN
+-----------------------------------------------------------------
+Déjalo vacío (fly.toml está en la raíz)
+
+-----------------------------------------------------------------
+PASOS PARA DESPLEGAR DESDE EL DASHBOARD:
+-----------------------------------------------------------------
+
+1. NO hagas clic en "Implementar" todavía
+
+2. Abre una terminal en tu computadora
+
+3. Navega a la carpeta del proyecto:
+   cd ruta/a/tu/proyecto
+
+4. Instala Fly CLI si no lo tienes:
+   Windows: iwr https://fly.io/install.ps1 -useb | iex
+   Mac/Linux: curl -L https://fly.io/install.sh | sh
+
+5. Autentícate:
+   fly auth login
+
+6. Crea el volumen:
+   fly volumes create tienda_data --region iad --size 1
+
+7. Configura los secretos:
+   fly secrets set JWT_SECRET="[tu-secreto-generado]"
+   fly secrets set ALLOWED_ORIGINS="https://tienda-inventario.fly.dev"
+
+8. Ahora SÍ, haz clic en "Implementar" en el dashboard
+
+-----------------------------------------------------------------
+VERIFICACIÓN POST-DESPLIEGUE:
+-----------------------------------------------------------------
+
+1. Espera a que termine el despliegue (2-5 minutos)
+
+2. Verifica el estado:
+   fly status
+
+3. Revisa los logs:
+   fly logs
+
+4. Abre tu app:
+   https://tienda-inventario.fly.dev
+
+5. Prueba el login:
+   Email: admin@tienda.com
+   Password: admin123
+
+-----------------------------------------------------------------
+SI ALGO SALE MAL:
+-----------------------------------------------------------------
+
+1. Revisa los logs:
+   fly logs
+
+2. Accede por SSH:
+   fly ssh console
+
+3. Verifica que el volumen existe:
+   fly volumes list
+
+4. Verifica los secretos:
+   fly secrets list
+
+-----------------------------------------------------------------
+COSTOS ESTIMADOS:
+-----------------------------------------------------------------
+
+- Máquina (256MB): ~$2-3/mes
+- Volumen (1GB): ~$0.15/mes
+- Total: ~$2-4/mes
+
+Con auto-stop habilitado, la app se detendrá cuando no haya 
+tráfico y se iniciará automáticamente.
+
+-----------------------------------------------------------------
+ARCHIVOS IMPORTANTES EN TU PROYECTO:
+-----------------------------------------------------------------
+
+✅ fly.toml - Configuración de Fly.io (ya creado)
+✅ Dockerfile - Configuración de Docker (ya optimizado)
+✅ DEPLOYMENT_FLYIO.md - Guía completa
+✅ FLYIO_CONFIG.md - Configuración rápida
+✅ DEPLOYMENT_CHECKLIST.md - Checklist paso a paso
+✅ deploy-flyio.sh - Script automatizado (Linux/Mac)
+✅ deploy-flyio.ps1 - Script automatizado (Windows)
+
+-----------------------------------------------------------------
+COMANDOS RÁPIDOS:
+-----------------------------------------------------------------
+
+# Ver estado
+fly status
+
+# Ver logs
+fly logs
+
+# Reiniciar
+fly apps restart
+
+# Backup de base de datos
+fly ssh sftp get /data/database.db ./backup.db
+
+# Escalar recursos
+fly scale memory 512
+
+# SSH
+fly ssh console
+
+-----------------------------------------------------------------
+¿NECESITAS AYUDA?
+-----------------------------------------------------------------
+
+1. Documentación: https://fly.io/docs/
+2. Comunidad: https://community.fly.io/
+3. Status: https://status.fly.io/
+
+=================================================================

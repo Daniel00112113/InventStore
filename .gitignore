@@ -1,4 +1,16 @@
 node_modules/
 .env
 *.db
+*.db-shm
+*.db-wal
 *.log
+backups/
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.kiro/
+fly.toml.bak
+.fly/

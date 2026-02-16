@@ -1,0 +1,37 @@
+# fly.toml app configuration file generated for tienda-inventario on 2026-02-16T00:00:00Z
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "tienda-inventario"
+primary_region = "iad"
+
+[build]
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 256
+
+[env]
+  NODE_ENV = "production"
+  PORT = "3000"
+  DB_PATH = "/data/database.db"
+  BACKUP_ENABLED = "true"
+  BACKUP_HOUR = "2"
+  BACKUP_RETENTION_DAYS = "30"
+  RATE_LIMIT_WINDOW_MS = "60000"
+  RATE_LIMIT_MAX_REQUESTS = "100"
+  LOG_LEVEL = "info"
+
+[mounts]
+  source = "tienda_data"
+  destination = "/data"
