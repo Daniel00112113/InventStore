@@ -357,6 +357,19 @@ Ver [ARCHITECTURE.md](ARCHITECTURE.md) para:
 4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
 5. Abrir Pull Request
 
+## 🔧 Solución de Problemas
+
+### Error CORS en Producción
+Si ves errores como "No permitido por CORS":
+
+```bash
+# Configurar en variables de entorno:
+ALLOWED_ORIGINS=*
+```
+
+### Más Problemas Comunes
+📖 **[Ver guía completa de troubleshooting →](TROUBLESHOOTING.md)**
+
 ## 📄 Licencia
 
 MIT License - ver archivo LICENSE para detalles
