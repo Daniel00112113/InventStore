@@ -68,7 +68,9 @@ En la sección "Environment Variables", agrega:
 | Key | Value |
 |-----|-------|
 | `JWT_SECRET` | [Haz clic en "Generate" o usa el comando de abajo] |
-| `ALLOWED_ORIGINS` | `https://tienda-inventario.onrender.com` |
+| `ALLOWED_ORIGINS` | `*` |
+
+**Nota sobre CORS**: Usar `*` permite todas las conexiones. Para mayor seguridad en producción, puedes especificar tu dominio exacto: `https://tu-app.onrender.com`
 
 Para generar JWT_SECRET manualmente:
 ```bash

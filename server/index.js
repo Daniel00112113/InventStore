@@ -56,9 +56,29 @@ const corsOptions = {
             return callback(null, true);
         }
 
+        // En producción, permitir dominios de Render, Netlify, Vercel y otros servicios comunes
+        if (NODE_ENV === 'production') {
+            const productionDomains = [
+                '.onrender.com',
+                '.netlify.app',
+                '.vercel.app',
+                '.fly.dev',
+                '.railway.app'
+            ];
+
+            const isAllowedProductionDomain = productionDomains.some(domain =>
+                origin.includes(domain)
+            );
+
+            if (isAllowedProductionDomain) {
+                return callback(null, true);
+            }
+        }
+
         if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
+            console.log(`CORS blocked origin: ${origin}`);
             callback(new Error('No permitido por CORS'));
         }
     },
