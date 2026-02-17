@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>InvenStore - Sistema de Gestión (Modular)</title>
+    <link rel="stylesheet" href="styles.css?v=2.0">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+
+<body>
+    <!-- El contenido HTML es el mismo que index.html -->
+    <!-- Solo cambian los scripts al final -->
+
+    <!-- Cargar dependencias primero -->
+    <script src="config.js"></script>
+    <script src="loading.js"></script>
+    <script src="notifications.js"></script>
+    <script src="api.js"></script>
+    <script src="error-handler.js"></script>
+    <script src="modal-handlers.js"></script>
+
+    <!-- Versión modular (ES6 modules) -->
+    <script type="module" src="app-modular.js"></script>
+
+    <!-- Scripts que aún no están modularizados -->
+    <script src="dashboard-charts.js"></script>
+    <script src="users.js?v=1.2"></script>
+
+    <!-- Nota: Los siguientes módulos deben ser migrados:
+         - Reportes (reports.js)
+         - Facturas (invoices.js)
+         - Devoluciones (returns.js)
+         - Cierre de caja (cash-register.js)
+         
+         Mientras tanto, se pueden cargar desde app.js original
+         o crear módulos separados siguiendo el patrón establecido.
+    -->
+</body>
+
+</html>
