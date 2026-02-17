@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
+import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -9,30 +10,47 @@ import registerRoutes from './routes/register.js';
 import superAdminRoutes from './routes/super-admin.js';
 import dashboardRoutes from './routes/dashboard.js';
 import productsRoutes from './routes/products.js';
-import salesRoutes from './routes/sales.js';
 import customersRoutes from './routes/customers.js';
 import reportsRoutes from './routes/reports.js';
 import adminRoutes from './routes/admin.js';
-import categoriesRoutes from './routes/categories.js';
 import promotionsRoutes from './routes/promotions.js';
 import exportRoutes from './routes/export.js';
 import returnsRoutes from './routes/returns.js';
 import cashRegisterRoutes from './routes/cash-register.js';
 import usersRoutes from './routes/users.js';
 import { scheduleAutoBackup } from './services/backup.js';
-import { rateLimiter, validateContentType, sanitizeBody, logRequest, errorHandler } from './middleware/security.js';
+// Importar middleware enterprise
+import { requestLogger, simpleRateLimit, logger } from './middleware/logger.js';
+import { performanceMonitoring, cacheHeaders, healthCheck } from './middleware/performance.js';
+import { initializeMetrics, metricsEndpoint } from './middleware/metrics.js';
+import { setupClustering, workerLoadBalancer, getWorkerStats } from './middleware/clustering.js';
+import { cache, cacheUtils } from './services/cache.js';
+import productionConfig from './config/production.js';
 
 dotenv.config();
 
+// Inicializar clustering en producción
+const isClusterEnabled = process.env.CLUSTER_MODE === 'true' && process.env.NODE_ENV === 'production';
+if (isClusterEnabled) {
+    const isMaster = setupClustering();
+    if (isMaster) {
+        // El proceso master no ejecuta el servidor, solo maneja workers
+        process.exit(0);
+    }
+}
+
+// Inicializar métricas de Prometheus
+initializeMetrics();
+
 // Validar variables de entorno críticas
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-    console.error('❌ ERROR: JWT_SECRET no está configurado o es muy corto');
-    console.error('💡 Genera uno seguro con: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
+    logger.error('JWT_SECRET no está configurado o es muy corto');
+    logger.info('Genera uno seguro con: node -e "console.log(require(\'crypto\').randomBytes(64).toString(\'hex\'))"');
     process.exit(1);
 }
 
 if (process.env.NODE_ENV === 'production' && process.env.JWT_SECRET.includes('CAMBIAR')) {
-    console.error('❌ ERROR: JWT_SECRET debe cambiarse en producción');
+    logger.error('JWT_SECRET debe cambiarse en producción');
     process.exit(1);
 }
 
@@ -86,9 +104,39 @@ const corsOptions = {
     optionsSuccessStatus: 200
 };
 
-// Middleware de seguridad
-app.use(logRequest);
-app.use(rateLimiter);
+// Middleware de seguridad y rendimiento
+app.use(requestLogger);
+app.use(performanceMonitoring);
+app.use(workerLoadBalancer);
+app.use(cacheHeaders);
+app.use(healthCheck);
+app.use(simpleRateLimit(100, 15 * 60 * 1000)); // 100 requests per 15 minutes
+
+// Security headers (configuración más permisiva para desarrollo)
+if (NODE_ENV === 'production') {
+    app.use(helmet({
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
+                imgSrc: ["'self'", "data:", "https:"],
+                connectSrc: ["'self'"],
+                fontSrc: ["'self'", "https:", "data:"],
+                objectSrc: ["'none'"],
+                mediaSrc: ["'self'"],
+                frameSrc: ["'none'"],
+            },
+        },
+        crossOriginEmbedderPolicy: false
+    }));
+} else {
+    // En desarrollo, usar configuración más permisiva
+    app.use(helmet({
+        contentSecurityPolicy: false, // Desactivar CSP en desarrollo
+        crossOriginEmbedderPolicy: false
+    }));
+}
 
 // Middleware de compresión GZIP
 app.use(compression({
@@ -98,13 +146,23 @@ app.use(compression({
         }
         return compression.filter(req, res);
     },
-    level: 6 // Nivel de compresión (0-9)
+    level: 6
 }));
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: '10mb' })); // Límite de tamaño de payload
-app.use(validateContentType);
-app.use(sanitizeBody);
+app.use(express.json({ limit: '10mb' }));
+
+// Middleware de validación simple
+app.use((req, res, next) => {
+    if (req.method === 'POST' || req.method === 'PUT') {
+        if (req.headers['content-type'] && !req.headers['content-type'].includes('application/json')) {
+            if (!req.headers['content-type'].includes('multipart/form-data')) {
+                return res.status(400).json({ error: 'Content-Type must be application/json' });
+            }
+        }
+    }
+    next();
+});
 
 // Servir archivos estáticos con caché
 app.use(express.static(join(__dirname, '../client'), {
@@ -113,17 +171,28 @@ app.use(express.static(join(__dirname, '../client'), {
     lastModified: true
 }));
 
-// Rutas API
+// Rutas específicas para frontends enterprise (NUEVO)
+app.get('/enterprise', (req, res) => {
+    res.sendFile(join(__dirname, '../client/index-enterprise.html'));
+});
+
+app.get('/dashboard-modern', (req, res) => {
+    res.sendFile(join(__dirname, '../client/dashboard-modern.html'));
+});
+
+app.get('/enterprise-login', (req, res) => {
+    res.sendFile(join(__dirname, '../client/index-enterprise.html'));
+});
+
+// Rutas API con cache inteligente
 app.use('/api/auth', authRoutes);
 app.use('/api/register', registerRoutes);
 app.use('/api/super-admin', superAdminRoutes);
-app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/products', productsRoutes);
-app.use('/api/sales', salesRoutes);
-app.use('/api/customers', customersRoutes);
-app.use('/api/reports', reportsRoutes);
+app.use('/api/dashboard', cache.middleware(300), dashboardRoutes); // Cache 5 min
+app.use('/api/products', cache.middleware(600), productsRoutes); // Cache 10 min
+app.use('/api/customers', cache.middleware(300), customersRoutes); // Cache 5 min
+app.use('/api/reports', cache.middleware(1800), reportsRoutes); // Cache 30 min
 app.use('/api/admin', adminRoutes);
-app.use('/api/categories', categoriesRoutes);
 app.use('/api/promotions', promotionsRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/returns', returnsRoutes);
@@ -146,11 +215,51 @@ app.use((req, res, next) => {
 });
 
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', version: '2.0.0' });
+    res.json({
+        status: 'ok',
+        version: '3.0.0',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
 });
 
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', version: '2.0.0', timestamp: new Date().toISOString() });
+    res.json({
+        status: 'ok',
+        version: '3.0.0',
+        timestamp: new Date().toISOString(),
+        database: 'connected',
+        uptime: process.uptime()
+    });
+});
+
+// Endpoint de métricas para Prometheus
+app.get('/metrics', metricsEndpoint);
+
+// Endpoint de estadísticas de cache
+app.get('/api/cache/stats', (req, res) => {
+    res.json(cache.getStats());
+});
+
+// Endpoint de estadísticas de workers
+app.get('/api/cluster/stats', (req, res) => {
+    res.json(getWorkerStats());
+});
+
+// Middleware de manejo de errores
+app.use((error, req, res, next) => {
+    logger.error('Unhandled error', {
+        error: error.message,
+        stack: error.stack,
+        requestId: req.requestId,
+        url: req.url,
+        method: req.method
+    });
+
+    res.status(500).json({
+        error: 'Internal server error',
+        requestId: req.requestId
+    });
 });
 
 // Ruta catch-all para SPA
@@ -158,18 +267,24 @@ app.get('*', (req, res) => {
     res.sendFile(join(__dirname, '../client/index.html'));
 });
 
-// Manejador de errores global (debe ir al final)
-app.use(errorHandler);
-
 app.listen(PORT, () => {
-    console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
-    console.log(`📱 Frontend disponible en http://localhost:${PORT}`);
-    console.log(`🔌 API disponible en http://localhost:${PORT}/api`);
-    console.log(`📦 Versión: 3.1.0 - Con mejoras de robustez`);
-    console.log(`🌍 Entorno: ${NODE_ENV}`);
-    console.log(`🛡️ Rate limiting: ${process.env.RATE_LIMIT_MAX_REQUESTS || 100} req/min por IP`);
-    console.log(`🔒 CORS configurado para: ${process.env.ALLOWED_ORIGINS || 'localhost'}`);
-    console.log(`✅ JWT_SECRET configurado (${process.env.JWT_SECRET.length} caracteres)`);
+    logger.info(`🚀 Servidor corriendo en http://localhost:${PORT}`);
+    logger.info(`📱 Frontend disponible en http://localhost:${PORT}`);
+    logger.info(`🔌 API disponible en http://localhost:${PORT}/api`);
+    logger.info(`📦 Versión: 3.0.0 - Enterprise Edition`);
+    logger.info(`🌍 Entorno: ${NODE_ENV}`);
+    logger.info(`🛡️ Rate limiting: 100 req/15min por IP`);
+    logger.info(`🔒 CORS configurado para: ${process.env.ALLOWED_ORIGINS || 'localhost'}`);
+    logger.info(`✅ JWT_SECRET configurado (${process.env.JWT_SECRET.length} caracteres)`);
+
+    // Información de producción
+    if (NODE_ENV === 'production') {
+        logger.info(`🏭 Modo producción activado`);
+        logger.info(`📊 Métricas disponibles en /metrics`);
+        logger.info(`💾 Cache stats en /api/cache/stats`);
+        logger.info(`👷 Worker stats en /api/cluster/stats`);
+        logger.info(`🔍 Health check en /health y /api/health`);
+    }
 
     // Iniciar backup automático
     scheduleAutoBackup();

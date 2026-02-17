@@ -1,36 +1,26 @@
 services:
   - type: web
-    name: tienda-inventario
-    runtime: node
-    plan: free
+    name: inventstore-api
+    env: node
+    plan: starter
     buildCommand: npm install
-    startCommand: npm run db:setup && npm start
+    startCommand: npm run start:prod
     envVars:
-      - key: NODE_VERSION
-        value: 20.18.1
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 10000
-      - key: DB_PATH
-        value: /opt/render/project/src/database.db
-      - key: BACKUP_ENABLED
-        value: true
-      - key: BACKUP_HOUR
-        value: 2
-      - key: BACKUP_RETENTION_DAYS
-        value: 30
-      - key: RATE_LIMIT_WINDOW_MS
-        value: 60000
-      - key: RATE_LIMIT_MAX_REQUESTS
-        value: 100
-      - key: LOG_LEVEL
-        value: info
       - key: JWT_SECRET
         generateValue: true
+      - key: PORT
+        value: 10000
+      - key: CLUSTER_MODE
+        value: false
+      - key: PROMETHEUS_ENABLED
+        value: true
+      - key: BACKUP_ENABLED
+        value: true
       - key: ALLOWED_ORIGINS
         value: "*"
     disk:
-      name: tienda-data
+      name: inventstore-disk
       mountPath: /opt/render/project/src
       sizeGB: 1

@@ -333,4 +333,61 @@ router.put('/change-password', authenticateSuperAdmin, async (req, res) => {
     }
 });
 
+// Obtener detalles de una tienda específica
+router.get('/stores/:id', authenticateSuperAdmin, (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const store = db.prepare(`
+            SELECT 
+                s.id,
+                s.name,
+                s.owner_name,
+                s.phone,
+                s.address,
+                s.subscription_status,
+                s.created_at,
+                COUNT(DISTINCT u.id) as total_users,
+                COUNT(DISTINCT sa.id) as total_sales,
+                COALESCE(SUM(sa.total), 0) as total_revenue
+            FROM stores s
+            LEFT JOIN users u ON s.id = u.store_id
+            LEFT JOIN sales sa ON s.id = sa.store_id
+            WHERE s.id = ?
+            GROUP BY s.id
+        `).get(id);
+
+        if (!store) {
+            return res.status(404).json({ error: 'Tienda no encontrada' });
+        }
+
+        // Obtener usuarios de la tienda
+        const users = db.prepare(`
+            SELECT id, username, full_name, user_type, created_at
+            FROM users 
+            WHERE store_id = ?
+            ORDER BY created_at DESC
+        `).all(id);
+
+        // Obtener últimas ventas
+        const recentSales = db.prepare(`
+            SELECT id, total, created_at
+            FROM sales 
+            WHERE store_id = ?
+            ORDER BY created_at DESC
+            LIMIT 10
+        `).all(id);
+
+        res.json({
+            store,
+            users,
+            recentSales
+        });
+
+    } catch (error) {
+        console.error('Error getting store details:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
 export default router;

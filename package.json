@@ -1,43 +1,62 @@
 {
-  "name": "tienda-barrio-saas",
-  "version": "1.0.0",
-  "description": "Sistema SaaS multi-tenant para tiendas de barrio en Colombia",
-  "type": "module",
+  "name": "inventstore-enterprise",
+  "version": "3.0.0",
+  "description": "Enterprise-grade inventory management system with multi-tenant architecture",
   "main": "server/index.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
   "scripts": {
-    "dev": "node --watch server/index.js",
+    "dev": "nodemon server/index.js",
     "start": "node server/index.js",
-    "db:setup": "node server/db/setup.js",
-    "db:migrate": "node server/db/migrate.js",
-    "db:migrate:gerente": "node server/db/run-gerente-migration.js",
-    "db:create-gerente": "node server/db/create-gerente.js",
-    "db:reset": "rm -f database.db && npm run db:setup",
-    "test": "echo \"Ver TESTING.md para guía de pruebas\" && exit 0"
+    "start:prod": "node start-production.js",
+    "start:render": "node start-render.js",
+    "start:enterprise": "node start-simple.js",
+    "quick-start": "node start-simple.js",
+    "restart": "node restart-server.js",
+    "optimize": "node optimize-production.js",
+    "verify-prod": "node optimize-production.js --verify-only",
+    "test": "echo \"Tests will be implemented\"",
+    "migrate": "node server/db/migrate.js",
+    "setup": "node server/db/setup.js",
+    "create-superadmin": "node create-superadmin-simple.js",
+    "backup": "node server/services/backup.js",
+    "docker:build": "docker build -t inventstore:latest .",
+    "docker:run": "docker run -p 3000:3000 inventstore:latest"
   },
   "keywords": [
-    "saas",
-    "multi-tenant",
     "inventory",
+    "management",
     "pos",
-    "tienda",
-    "colombia"
+    "retail",
+    "enterprise",
+    "multi-tenant"
   ],
-  "author": "Tu Nombre",
+  "author": "InvenStore Team",
   "license": "MIT",
   "dependencies": {
-    "bcrypt": "^5.1.1",
-    "better-sqlite3": "^9.2.2",
-    "compression": "^1.8.1",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "exceljs": "^4.3.0",
     "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "compression": "^1.7.4",
+    "better-sqlite3": "^9.2.2",
+    "bcrypt": "^5.1.1",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.7",
-    "pdfkit": "^0.13.0",
-    "twilio": "^4.19.0"
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0",
+    "helmet": "^7.1.0"
   },
-  "engines": {
-    "node": "20.x"
-  }
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/inventstore/inventstore-enterprise.git"
+  },
+  "bugs": {
+    "url": "https://github.com/inventstore/inventstore-enterprise/issues"
+  },
+  "homepage": "https://github.com/inventstore/inventstore-enterprise#readme"
 }
