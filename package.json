@@ -21,6 +21,7 @@
     "test": "echo \"Tests will be implemented\"",
     "migrate": "node server/db/migrate.js",
     "setup": "node server/db/setup.js",
+    "db:setup": "node server/db/setup.js",
     "create-superadmin": "node create-superadmin-simple.js",
     "backup": "node server/services/backup.js",
     "docker:build": "docker build -t inventstore:latest .",
