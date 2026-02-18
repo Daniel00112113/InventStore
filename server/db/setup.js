@@ -21,10 +21,10 @@ const passwordHash = bcrypt.hashSync('admin123', 10);
 const userStmt = db.prepare('INSERT INTO users (store_id, username, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)');
 userStmt.run(storeId, 'admin', passwordHash, 'Administrador', 'admin');
 
-// Crear SUPER ADMIN (usando admin como rol temporal hasta que se actualice el schema)
+// Crear SUPER ADMIN con rol correcto
 const superAdminPasswordHash = bcrypt.hashSync('superadmin123', 10);
 const superAdminStmt = db.prepare('INSERT INTO users (store_id, username, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)');
-superAdminStmt.run(storeId, 'superadmin', superAdminPasswordHash, 'Super Administrador', 'admin');
+superAdminStmt.run(storeId, 'superadmin', superAdminPasswordHash, 'Super Administrador', 'super_admin');
 
 console.log('✅ Base de datos configurada exitosamente');
 console.log(`📦 Tienda Sistema ID: ${storeId}`);

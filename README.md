@@ -15,12 +15,24 @@ npm install
 # 2. Configurar base de datos
 npm run db:setup
 
-# 3. Iniciar servidor
+# 3. Verificar deployment limpio (opcional)
+npm run verify-deployment
+
+# 4. Iniciar servidor
 npm run dev
 
-# 4. Abrir navegador en http://localhost:3000
+# 5. Abrir navegador en http://localhost:3000
 # Usuario: admin | Contraseña: admin123
+# Super Admin: superadmin | Contraseña: superadmin123
 ```
+
+### 🔑 Acceso Super Admin
+
+El sistema incluye un panel de Super Administrador para gestión multi-tenant:
+
+- **URL**: `/super-admin`
+- **Credenciales**: `superadmin` / `superadmin123`
+- **Funciones**: Gestión de tiendas, códigos de invitación, estadísticas globales
 
 📖 **[Ver guía completa de inicio rápido →](QUICKSTART.md)**
 
@@ -76,6 +88,15 @@ npm run dev
 - Diseño 100% responsive
 - Optimizado para móviles
 - Sin frameworks (carga rápida)
+
+### 🔧 Panel Super Administrador
+- **Acceso**: `/super-admin` con credenciales `superadmin/superadmin123`
+- **Dashboard Global**: Estadísticas de todas las tiendas del sistema
+- **Gestión de Tiendas**: Ver, buscar y administrar todas las tiendas registradas
+- **Códigos de Invitación**: Generar y gestionar códigos para nuevas tiendas
+- **Métricas del Sistema**: Usuarios totales, tiendas activas, estadísticas mensuales
+- **Seguridad**: Autenticación JWT específica para super admin
+- **Sin Datos Sensibles**: Solo estadísticas agregadas, sin acceso a datos de ventas específicos
 
 ### 🔧 Panel Administrador Global
 - Ver todas las tiendas registradas

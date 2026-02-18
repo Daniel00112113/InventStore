@@ -3,7 +3,7 @@ services:
     name: inventstore-api
     env: node
     plan: starter
-    buildCommand: npm install && npm run db:setup && node server/db/migrate-super-admin.js
+    buildCommand: npm install && npm run db:setup
     startCommand: npm run start:render
     envVars:
       - key: NODE_ENV

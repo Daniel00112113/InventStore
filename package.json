@@ -18,6 +18,7 @@
     "restart": "node restart-server.js",
     "optimize": "node optimize-production.js",
     "verify-prod": "node optimize-production.js --verify-only",
+    "verify-deployment": "node verify-deployment.js",
     "test": "echo \"Tests will be implemented\"",
     "migrate": "node server/db/migrate.js",
     "setup": "node server/db/setup.js",

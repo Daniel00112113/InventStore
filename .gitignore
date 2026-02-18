@@ -14,9 +14,18 @@ build/
 .env.test.local
 .env.production.local
 
-# Database
+# Database files (NEVER commit these!)
+*.db
 *.db-shm
 *.db-wal
+database.db*
+*.sqlite
+*.sqlite3
+
+# Backup files - NEVER commit personal data
+backups/*.db
+*.backup
+backup_*.db
 
 # Logs
 logs/
