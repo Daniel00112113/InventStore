@@ -112,7 +112,7 @@ app.use(cacheHeaders);
 app.use(healthCheck);
 app.use(simpleRateLimit(100, 15 * 60 * 1000)); // 100 requests per 15 minutes
 
-// Security headers
+// Security headers - CSP más permisivo para desarrollo
 const helmetCSP = {
     contentSecurityPolicy: {
         directives: {
@@ -122,9 +122,7 @@ const helmetCSP = {
             // Permite onclick= y otros event handlers inline en el HTML
             scriptSrcAttr: ["'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: NODE_ENV === 'development'
-                ? ["'self'", "http://localhost:*", "https://cdn.jsdelivr.net", "https:"]
-                : ["'self'", "https://cdn.jsdelivr.net", "https:"],
+            connectSrc: ["'self'", "http:", "https:", "ws:", "wss:"],
             fontSrc: ["'self'", "https:", "data:"],
             objectSrc: ["'none'"],
             mediaSrc: ["'self'"],
