@@ -8,18 +8,26 @@ const router = express.Router();
 
 // Listar productos (filtrar por ?categoryId=)
 router.get('/', authenticate, validateTenant, (req, res) => {
-    const { categoryId } = req.query;
-    let query = 'SELECT * FROM products WHERE store_id = ? AND active = 1';
-    const params = [req.storeId];
+    try {
+        const { categoryId } = req.query;
+        let query = 'SELECT * FROM products WHERE store_id = ? AND active = 1';
+        const params = [req.storeId];
 
-    if (categoryId) {
-        query += ' AND category_id = ?';
-        params.push(categoryId);
+        if (categoryId) {
+            query += ' AND category_id = ?';
+            params.push(categoryId);
+        }
+        query += ' ORDER BY name';
+
+        const products = db.prepare(query).all(...params);
+        res.json(products);
+    } catch (error) {
+        console.error('Error getting products:', error);
+        res.status(500).json({
+            error: 'Error al obtener productos',
+            details: error.message
+        });
     }
-    query += ' ORDER BY name';
-
-    const products = db.prepare(query).all(...params);
-    res.json(products);
 });
 
 // Buscar por código de barras

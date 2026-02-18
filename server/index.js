@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { existsSync } from 'fs';
 import authRoutes from './routes/auth.js';
 import registerRoutes from './routes/register.js';
 import superAdminRoutes from './routes/super-admin.js';
@@ -28,6 +29,49 @@ import { cache, cacheUtils } from './services/cache.js';
 import productionConfig from './config/production.js';
 
 dotenv.config();
+
+// Verificar e inicializar base de datos automáticamente
+async function ensureDatabaseSetup() {
+    const dbPath = './database.db';
+
+    if (!existsSync(dbPath)) {
+        logger.info('🔧 Base de datos no encontrada, ejecutando setup automático...');
+        try {
+            // Importar y ejecutar setup dinámicamente
+            const { execSync } = await import('child_process');
+            execSync('node server/db/setup.js', { stdio: 'inherit' });
+            logger.info('✅ Setup de base de datos completado');
+        } catch (error) {
+            logger.error('❌ Error en setup automático de base de datos:', error);
+            process.exit(1);
+        }
+    } else {
+        // Verificar que las tablas existan
+        try {
+            const Database = (await import('better-sqlite3')).default;
+            const db = new Database(dbPath);
+
+            // Verificar tabla stores
+            const storesTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='stores'").get();
+            if (!storesTable) {
+                logger.info('🔧 Tablas no encontradas, ejecutando setup...');
+                db.close();
+                const { execSync } = await import('child_process');
+                execSync('node server/db/setup.js', { stdio: 'inherit' });
+                logger.info('✅ Setup de base de datos completado');
+            } else {
+                db.close();
+                logger.info('✅ Base de datos verificada correctamente');
+            }
+        } catch (error) {
+            logger.error('❌ Error verificando base de datos:', error);
+            process.exit(1);
+        }
+    }
+}
+
+// Ejecutar verificación de base de datos
+await ensureDatabaseSetup();
 
 // Inicializar clustering en producción
 const isClusterEnabled = process.env.CLUSTER_MODE === 'true' && process.env.NODE_ENV === 'production';
