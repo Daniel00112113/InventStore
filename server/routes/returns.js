@@ -1,8 +1,9 @@
 import express from 'express';
-import db from '../config/db.js';
+import Database from 'better-sqlite3';
 import { authenticate, validateTenant } from '../middleware/auth.js';
 
 const router = express.Router();
+const db = new Database('database.db');
 
 // Buscar facturas para devolución (DEBE IR ANTES DE GET /)
 router.get('/search-sales', authenticate, validateTenant, (req, res) => {
@@ -18,7 +19,7 @@ router.get('/search-sales', authenticate, validateTenant, (req, res) => {
             WHERE s.store_id = ?
         `;
 
-        const params = [req.storeId];
+        const params = [req.user.storeId];
 
         if (saleId) {
             query += ' AND s.id = ?';
@@ -60,7 +61,7 @@ router.get('/sale-items/:saleId', authenticate, validateTenant, (req, res) => {
     try {
         // Verificar que la venta pertenece a la tienda
         const sale = db.prepare('SELECT id FROM sales WHERE id = ? AND store_id = ?')
-            .get(req.params.saleId, req.storeId);
+            .get(req.params.saleId, req.user.storeId);
 
         if (!sale) {
             return res.status(404).json({ error: 'Factura no encontrada' });
@@ -94,7 +95,7 @@ router.post('/', authenticate, validateTenant, (req, res) => {
         // Validar productos y calcular total
         for (const item of items) {
             const product = db.prepare('SELECT * FROM products WHERE id = ? AND store_id = ?')
-                .get(item.productId, req.storeId);
+                .get(item.productId, req.user.storeId);
 
             if (!product) {
                 throw new Error(`Producto ${item.productId} no encontrado`);
@@ -110,7 +111,7 @@ router.post('/', authenticate, validateTenant, (req, res) => {
         `);
 
         const returnResult = returnStmt.run(
-            req.storeId,
+            req.user.storeId,
             saleId || null,
             customerId || null,
             totalAmount,
@@ -165,7 +166,7 @@ router.get('/', authenticate, validateTenant, (req, res) => {
             WHERE r.store_id = ?
         `;
 
-        const params = [req.storeId];
+        const params = [req.user.storeId];
 
         if (startDate) {
             query += ' AND DATE(r.created_at) >= ?';
@@ -180,10 +181,13 @@ router.get('/', authenticate, validateTenant, (req, res) => {
         query += ' ORDER BY r.created_at DESC LIMIT 100';
 
         const returns = db.prepare(query).all(...params);
-        res.json(returns);
+
+        // Always return an array, even if empty
+        res.json(returns || []);
     } catch (error) {
         console.error('Error listing returns:', error);
-        res.status(500).json({ error: 'Error al listar devoluciones' });
+        // Return empty array on error to prevent frontend crashes
+        res.status(500).json([]);
     }
 });
 
@@ -196,7 +200,7 @@ router.get('/:id', authenticate, validateTenant, (req, res) => {
             JOIN users u ON r.processed_by = u.id
             LEFT JOIN customers c ON r.customer_id = c.id
             WHERE r.id = ? AND r.store_id = ?
-        `).get(req.params.id, req.storeId);
+        `).get(req.params.id, req.user.storeId);
 
         if (!returnData) {
             return res.status(404).json({ error: 'Devolución no encontrada' });

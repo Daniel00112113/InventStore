@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
-import db from '../config/db.js';
+import Database from 'better-sqlite3';
+
+const db = new Database('database.db');
 
 export const authenticate = (req, res, next) => {
     // Intentar obtener token del header o query string

@@ -1,8 +1,9 @@
 import express from 'express';
-import db from '../config/db.js';
+import Database from 'better-sqlite3';
 import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
+const db = new Database('database.db');
 
 // Calcular resumen del día
 function calculateDailySummary(storeId, date) {
@@ -208,17 +209,19 @@ router.get('/history', authenticate, (req, res) => {
         const { total } = db.prepare(countQuery).get(...countParams);
 
         res.json({
-            closings,
+            closings: closings || [],
             total,
             limit: parseInt(limit),
             offset: parseInt(offset)
         });
     } catch (error) {
         console.error('Error al obtener historial de cierres:', error);
+        // Return empty structure on error to prevent frontend crashes
         res.status(500).json({
-            error: true,
-            message: 'Error al obtener historial de cierres',
-            timestamp: new Date().toISOString()
+            closings: [],
+            total: 0,
+            limit: parseInt(req.query.limit || 50),
+            offset: parseInt(req.query.offset || 0)
         });
     }
 });

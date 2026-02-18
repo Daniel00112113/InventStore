@@ -122,6 +122,50 @@ CREATE TABLE IF NOT EXISTS payments (
   FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
 );
 
+-- Tabla de devoluciones
+CREATE TABLE IF NOT EXISTS returns (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  store_id INTEGER NOT NULL,
+  sale_id INTEGER,
+  customer_id INTEGER,
+  total_amount REAL NOT NULL,
+  reason TEXT,
+  processed_by INTEGER NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE,
+  FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE SET NULL,
+  FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL,
+  FOREIGN KEY (processed_by) REFERENCES users(id)
+);
+
+-- Tabla de items de devolución
+CREATE TABLE IF NOT EXISTS return_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  return_id INTEGER NOT NULL,
+  product_id INTEGER NOT NULL,
+  quantity INTEGER NOT NULL,
+  unit_price REAL NOT NULL,
+  subtotal REAL NOT NULL,
+  FOREIGN KEY (return_id) REFERENCES returns(id) ON DELETE CASCADE,
+  FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+-- Tabla de cierres de caja diarios
+CREATE TABLE IF NOT EXISTS cash_register_closings (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  store_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  closing_date DATE NOT NULL,
+  expected_cash REAL NOT NULL,
+  actual_cash REAL NOT NULL,
+  difference REAL NOT NULL,
+  notes TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id),
+  UNIQUE(store_id, closing_date)
+);
+
 -- Índices para optimización multi-tenant
 CREATE INDEX IF NOT EXISTS idx_users_store ON users(store_id);
 CREATE INDEX IF NOT EXISTS idx_customers_store ON customers(store_id);
@@ -140,3 +184,11 @@ CREATE INDEX IF NOT EXISTS idx_payments_customer ON payments(customer_id);
 CREATE INDEX IF NOT EXISTS idx_categories_store ON categories(store_id);
 CREATE INDEX IF NOT EXISTS idx_promotions_store ON promotions(store_id);
 CREATE INDEX IF NOT EXISTS idx_promotions_active ON promotions(store_id, active);
+CREATE INDEX IF NOT EXISTS idx_returns_store ON returns(store_id);
+CREATE INDEX IF NOT EXISTS idx_returns_date ON returns(store_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_returns_sale ON returns(sale_id);
+CREATE INDEX IF NOT EXISTS idx_returns_customer ON returns(customer_id);
+CREATE INDEX IF NOT EXISTS idx_return_items_return ON return_items(return_id);
+CREATE INDEX IF NOT EXISTS idx_return_items_product ON return_items(product_id);
+CREATE INDEX IF NOT EXISTS idx_closings_store_date ON cash_register_closings(store_id, closing_date DESC);
+CREATE INDEX IF NOT EXISTS idx_closings_user ON cash_register_closings(user_id);

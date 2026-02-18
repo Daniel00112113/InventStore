@@ -122,7 +122,9 @@ const helmetCSP = {
             // Permite onclick= y otros event handlers inline en el HTML
             scriptSrcAttr: ["'unsafe-inline'"],
             imgSrc: ["'self'", "data:", "https:"],
-            connectSrc: ["'self'", "https://cdn.jsdelivr.net", "https:"],
+            connectSrc: NODE_ENV === 'development'
+                ? ["'self'", "http://localhost:*", "https://cdn.jsdelivr.net", "https:"]
+                : ["'self'", "https://cdn.jsdelivr.net", "https:"],
             fontSrc: ["'self'", "https:", "data:"],
             objectSrc: ["'none'"],
             mediaSrc: ["'self'"],
