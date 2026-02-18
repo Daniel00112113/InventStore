@@ -18,6 +18,8 @@ import exportRoutes from './routes/export.js';
 import returnsRoutes from './routes/returns.js';
 import cashRegisterRoutes from './routes/cash-register.js';
 import usersRoutes from './routes/users.js';
+import categoriesRoutes from './routes/categories.js';
+import invoicesRoutes from './routes/invoices.js';
 import { scheduleAutoBackup } from './services/backup.js';
 // Importar middleware enterprise
 import { requestLogger, simpleRateLimit, logger } from './middleware/logger.js';
@@ -121,7 +123,7 @@ if (NODE_ENV === 'production') {
                 styleSrc: ["'self'", "'unsafe-inline'"],
                 scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
                 imgSrc: ["'self'", "data:", "https:"],
-                connectSrc: ["'self'"],
+                connectSrc: ["'self'", "https://cdn.jsdelivr.net"],
                 fontSrc: ["'self'", "https:", "data:"],
                 objectSrc: ["'none'"],
                 mediaSrc: ["'self'"],
@@ -133,7 +135,19 @@ if (NODE_ENV === 'production') {
 } else {
     // En desarrollo, usar configuración más permisiva
     app.use(helmet({
-        contentSecurityPolicy: false, // Desactivar CSP en desarrollo
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ["'self'"],
+                styleSrc: ["'self'", "'unsafe-inline'"],
+                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
+                imgSrc: ["'self'", "data:", "https:"],
+                connectSrc: ["'self'", "https://cdn.jsdelivr.net"],
+                fontSrc: ["'self'", "https:", "data:"],
+                objectSrc: ["'none'"],
+                mediaSrc: ["'self'"],
+                frameSrc: ["'none'"],
+            },
+        },
         crossOriginEmbedderPolicy: false
     }));
 }
@@ -198,6 +212,8 @@ app.use('/api/export', exportRoutes);
 app.use('/api/returns', returnsRoutes);
 app.use('/api/cash-register', cashRegisterRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/categories', categoriesRoutes);
+app.use('/api/invoices', invoicesRoutes);
 
 // Headers de seguridad y performance
 app.use((req, res, next) => {
