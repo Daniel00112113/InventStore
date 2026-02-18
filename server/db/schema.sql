@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT NOT NULL,
   password_hash TEXT NOT NULL,
   full_name TEXT NOT NULL,
-  role TEXT NOT NULL CHECK(role IN ('admin', 'gerente', 'empleado')),
+  role TEXT NOT NULL CHECK(role IN ('admin', 'gerente', 'empleado', 'super_admin')),
   active INTEGER DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (store_id) REFERENCES stores(id) ON DELETE CASCADE,

@@ -21,6 +21,11 @@ const passwordHash = bcrypt.hashSync('admin123', 10);
 const userStmt = db.prepare('INSERT INTO users (store_id, username, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)');
 userStmt.run(storeId, 'admin', passwordHash, 'Administrador', 'admin');
 
+// Crear SUPER ADMIN (para gestión multi-tenant)
+const superAdminPasswordHash = bcrypt.hashSync('superadmin123', 10);
+const superAdminStmt = db.prepare('INSERT INTO users (store_id, username, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)');
+superAdminStmt.run(storeId, 'superadmin', superAdminPasswordHash, 'Super Administrador', 'super_admin');
+
 // Crear categorías básicas
 const categoryStmt = db.prepare('INSERT INTO categories (store_id, name, description) VALUES (?, ?, ?)');
 categoryStmt.run(storeId, 'Bebidas', 'Bebidas y refrescos');
@@ -35,6 +40,8 @@ productStmt.run(storeId, 'Arroz 500g', '7702010000034', 1800, 2500, 100, 20, 2);
 
 console.log('✅ Base de datos configurada exitosamente');
 console.log(`📦 Tienda ID: ${storeId}`);
-console.log('👤 Usuario: admin / Contraseña: admin123');
+console.log('👤 Usuario admin: admin / Contraseña: admin123');
+console.log('🔑 Super Admin: superadmin / Contraseña: superadmin123');
+console.log('🌐 Super Admin Panel: /super-admin');
 
 db.close();

@@ -1,9 +1,10 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import db from '../config/db.js';
+import Database from 'better-sqlite3';
 
 const router = express.Router();
+const db = new Database('database.db');
 
 // Middleware para verificar super admin
 const authenticateSuperAdmin = (req, res, next) => {
@@ -38,9 +39,11 @@ router.post('/login', async (req, res) => {
         }
 
         const superAdmin = db.prepare(`
-      SELECT * FROM super_admins 
-      WHERE username = ? AND active = 1
-    `).get(username);
+            SELECT u.*, s.name as store_name 
+            FROM users u 
+            JOIN stores s ON u.store_id = s.id 
+            WHERE u.username = ? AND u.role = 'super_admin' AND u.active = 1
+        `).get(username);
 
         if (!superAdmin) {
             return res.status(401).json({ error: 'Credenciales inválidas' });

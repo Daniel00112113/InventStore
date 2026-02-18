@@ -179,6 +179,10 @@ app.get('/enterprise-login', (req, res) => {
     res.sendFile(join(__dirname, '../client/index-enterprise.html'));
 });
 
+app.get('/super-admin', (req, res) => {
+    res.sendFile(join(__dirname, '../client/super-admin.html'));
+});
+
 // Rutas API con cache inteligente
 app.use('/api/auth', authRoutes);
 app.use('/api/register', registerRoutes);
