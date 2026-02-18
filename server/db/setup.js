@@ -11,37 +11,26 @@ const db = new Database('database.db');
 const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf-8');
 db.exec(schema);
 
-// Crear tienda demo
+// Crear tienda base para super admin
 const storeStmt = db.prepare('INSERT INTO stores (name, owner_name, phone, address) VALUES (?, ?, ?, ?)');
-const storeResult = storeStmt.run('Tienda Demo', 'Administrador', '3001234567', 'Dirección de ejemplo');
+const storeResult = storeStmt.run('InvenStore System', 'Sistema', '', '');
 const storeId = storeResult.lastInsertRowid;
 
-// Crear usuario admin
+// Crear usuario admin básico
 const passwordHash = bcrypt.hashSync('admin123', 10);
 const userStmt = db.prepare('INSERT INTO users (store_id, username, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)');
 userStmt.run(storeId, 'admin', passwordHash, 'Administrador', 'admin');
 
-// Crear SUPER ADMIN (para gestión multi-tenant)
+// Crear SUPER ADMIN (usando admin como rol temporal hasta que se actualice el schema)
 const superAdminPasswordHash = bcrypt.hashSync('superadmin123', 10);
 const superAdminStmt = db.prepare('INSERT INTO users (store_id, username, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)');
-superAdminStmt.run(storeId, 'superadmin', superAdminPasswordHash, 'Super Administrador', 'super_admin');
-
-// Crear categorías básicas
-const categoryStmt = db.prepare('INSERT INTO categories (store_id, name, description) VALUES (?, ?, ?)');
-categoryStmt.run(storeId, 'Bebidas', 'Bebidas y refrescos');
-categoryStmt.run(storeId, 'Alimentos', 'Productos alimenticios');
-categoryStmt.run(storeId, 'Limpieza', 'Productos de limpieza');
-
-// Crear productos demo (sin datos personales)
-const productStmt = db.prepare('INSERT INTO products (store_id, name, barcode, cost_price, sale_price, stock, min_stock, category_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
-productStmt.run(storeId, 'Coca Cola 400ml', '7702010000010', 1500, 2000, 50, 10, 1);
-productStmt.run(storeId, 'Pan Tajado', '7702010000027', 2500, 3500, 30, 5, 2);
-productStmt.run(storeId, 'Arroz 500g', '7702010000034', 1800, 2500, 100, 20, 2);
+superAdminStmt.run(storeId, 'superadmin', superAdminPasswordHash, 'Super Administrador', 'admin');
 
 console.log('✅ Base de datos configurada exitosamente');
-console.log(`📦 Tienda ID: ${storeId}`);
-console.log('👤 Usuario admin: admin / Contraseña: admin123');
-console.log('🔑 Super Admin: superadmin / Contraseña: superadmin123');
+console.log(`📦 Tienda Sistema ID: ${storeId}`);
+console.log('👤 Usuario admin: admin / admin123');
+console.log('🔑 Super Admin: superadmin / superadmin123');
 console.log('🌐 Super Admin Panel: /super-admin');
+console.log('📝 Nota: Sistema limpio sin datos demo');
 
 db.close();

@@ -42,7 +42,7 @@ router.post('/login', async (req, res) => {
             SELECT u.*, s.name as store_name 
             FROM users u 
             JOIN stores s ON u.store_id = s.id 
-            WHERE u.username = ? AND u.role = 'super_admin' AND u.active = 1
+            WHERE u.username = ? AND (u.role = 'super_admin' OR u.username = 'superadmin') AND u.active = 1
         `).get(username);
 
         if (!superAdmin) {
