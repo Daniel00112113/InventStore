@@ -244,6 +244,10 @@ app.use('/api/users', usersRoutes);
 app.use('/api', inventoryRoutes); // Handles /products and /categories
 app.use('/api', salesRoutes);     // Handles /customers and /sales (invoices)
 
+// Rutas alternativas para evitar ad blockers
+app.use('/api/inventory', inventoryRoutes); // Alternative: /api/inventory/products, /api/inventory/categories
+app.use('/api/store', inventoryRoutes);     // Alternative: /api/store/products, /api/store/categories
+
 // Headers de seguridad y performance
 app.use((req, res, next) => {
     // Security headers
@@ -276,6 +280,53 @@ app.get('/api/health', (req, res) => {
         database: 'connected',
         uptime: process.uptime()
     });
+});
+
+// Endpoint de diagnóstico para debugging
+app.get('/api/debug/database', async (req, res) => {
+    try {
+        const { default: Database } = await import('better-sqlite3');
+        const testDb = new Database('./database.db');
+
+        // Verificar tablas
+        const tables = testDb.prepare("SELECT name FROM sqlite_master WHERE type='table'").all();
+
+        // Verificar stores
+        let storesCount = 0;
+        let categoriesCount = 0;
+        let productsCount = 0;
+
+        try {
+            storesCount = testDb.prepare("SELECT COUNT(*) as count FROM stores").get().count;
+            categoriesCount = testDb.prepare("SELECT COUNT(*) as count FROM categories").get().count;
+            productsCount = testDb.prepare("SELECT COUNT(*) as count FROM products").get().count;
+        } catch (e) {
+            // Tablas no existen
+        }
+
+        testDb.close();
+
+        res.json({
+            status: 'ok',
+            database: {
+                exists: true,
+                tables: tables.map(t => t.name),
+                counts: {
+                    stores: storesCount,
+                    categories: categoriesCount,
+                    products: productsCount
+                }
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: 'error',
+            error: error.message,
+            database: {
+                exists: false
+            }
+        });
+    }
 });
 
 // Endpoint de métricas para Prometheus

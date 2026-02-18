@@ -16,10 +16,26 @@ document.addEventListener('DOMContentLoaded', () => {
             // Cargar categorías
             try {
                 const token = localStorage.getItem('token');
-                const API_URL = window.API_URL || 'http://localhost:3000/api';
-                const res = await fetch(`${API_URL}/categories`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const API_URL = window.CONFIG?.API_URL || window.API_URL || '/api';
+
+                // Intentar múltiples endpoints por si hay bloqueo de ad blocker
+                let res;
+                try {
+                    res = await fetch(`${API_URL}/categories`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                } catch (firstError) {
+                    console.warn('Primer intento falló, probando ruta alternativa:', firstError);
+                    // Intentar con ruta alternativa
+                    res = await fetch(`${API_URL}/inventory/categories`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                }
+
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+
                 const categories = await res.json();
 
                 const select = document.getElementById('product-category');
