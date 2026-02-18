@@ -20,6 +20,7 @@ import cashRegisterRoutes from './routes/cash-register.js';
 import usersRoutes from './routes/users.js';
 import categoriesRoutes from './routes/categories.js';
 import invoicesRoutes from './routes/invoices.js';
+import salesRoutes from './routes/sales.js';
 import { scheduleAutoBackup } from './services/backup.js';
 // Importar middleware enterprise
 import { requestLogger, simpleRateLimit, logger } from './middleware/logger.js';
@@ -114,43 +115,26 @@ app.use(cacheHeaders);
 app.use(healthCheck);
 app.use(simpleRateLimit(100, 15 * 60 * 1000)); // 100 requests per 15 minutes
 
-// Security headers (configuración más permisiva para desarrollo)
-if (NODE_ENV === 'production') {
-    app.use(helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                styleSrc: ["'self'", "'unsafe-inline'"],
-                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
-                imgSrc: ["'self'", "data:", "https:"],
-                connectSrc: ["'self'", "https://cdn.jsdelivr.net"],
-                fontSrc: ["'self'", "https:", "data:"],
-                objectSrc: ["'none'"],
-                mediaSrc: ["'self'"],
-                frameSrc: ["'none'"],
-            },
+// Security headers
+const helmetCSP = {
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
+            // Permite onclick= y otros event handlers inline en el HTML
+            scriptSrcAttr: ["'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:"],
+            connectSrc: ["'self'", "https://cdn.jsdelivr.net", "https:"],
+            fontSrc: ["'self'", "https:", "data:"],
+            objectSrc: ["'none'"],
+            mediaSrc: ["'self'"],
+            frameSrc: ["'none'"],
         },
-        crossOriginEmbedderPolicy: false
-    }));
-} else {
-    // En desarrollo, usar configuración más permisiva
-    app.use(helmet({
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ["'self'"],
-                styleSrc: ["'self'", "'unsafe-inline'"],
-                scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net"],
-                imgSrc: ["'self'", "data:", "https:"],
-                connectSrc: ["'self'", "https://cdn.jsdelivr.net"],
-                fontSrc: ["'self'", "https:", "data:"],
-                objectSrc: ["'none'"],
-                mediaSrc: ["'self'"],
-                frameSrc: ["'none'"],
-            },
-        },
-        crossOriginEmbedderPolicy: false
-    }));
-}
+    },
+    crossOriginEmbedderPolicy: false
+};
+app.use(helmet(helmetCSP));
 
 // Middleware de compresión GZIP
 app.use(compression({
@@ -214,6 +198,8 @@ app.use('/api/cash-register', cashRegisterRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/categories', categoriesRoutes);
 app.use('/api/invoices', invoicesRoutes);
+// Ruta /api/sales como alias directo para el historial de facturas
+app.use('/api/sales', salesRoutes);
 
 // Headers de seguridad y performance
 app.use((req, res, next) => {
