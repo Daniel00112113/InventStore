@@ -9,8 +9,6 @@ import authRoutes from './routes/auth.js';
 import registerRoutes from './routes/register.js';
 import superAdminRoutes from './routes/super-admin.js';
 import dashboardRoutes from './routes/dashboard.js';
-import productsRoutes from './routes/products.js';
-import customersRoutes from './routes/customers.js';
 import reportsRoutes from './routes/reports.js';
 import adminRoutes from './routes/admin.js';
 import promotionsRoutes from './routes/promotions.js';
@@ -18,8 +16,7 @@ import exportRoutes from './routes/export.js';
 import returnsRoutes from './routes/returns.js';
 import cashRegisterRoutes from './routes/cash-register.js';
 import usersRoutes from './routes/users.js';
-import categoriesRoutes from './routes/categories.js';
-import invoicesRoutes from './routes/invoices.js';
+import inventoryRoutes from './routes/inventory.js';
 import salesRoutes from './routes/sales.js';
 import { scheduleAutoBackup } from './services/backup.js';
 // Importar middleware enterprise
@@ -187,8 +184,6 @@ app.use('/api/auth', authRoutes);
 app.use('/api/register', registerRoutes);
 app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/dashboard', cache.middleware(300), dashboardRoutes); // Cache 5 min
-app.use('/api/products', cache.middleware(600), productsRoutes); // Cache 10 min
-app.use('/api/customers', cache.middleware(300), customersRoutes); // Cache 5 min
 app.use('/api/reports', cache.middleware(1800), reportsRoutes); // Cache 30 min
 app.use('/api/admin', adminRoutes);
 app.use('/api/promotions', promotionsRoutes);
@@ -196,10 +191,10 @@ app.use('/api/export', exportRoutes);
 app.use('/api/returns', returnsRoutes);
 app.use('/api/cash-register', cashRegisterRoutes);
 app.use('/api/users', usersRoutes);
-app.use('/api/categories', categoriesRoutes);
-app.use('/api/invoices', invoicesRoutes);
-// Ruta /api/sales como alias directo para el historial de facturas
-app.use('/api/sales', salesRoutes);
+
+// Consolidated Routes
+app.use('/api', inventoryRoutes); // Handles /products and /categories
+app.use('/api', salesRoutes);     // Handles /customers and /sales (invoices)
 
 // Headers de seguridad y performance
 app.use((req, res, next) => {

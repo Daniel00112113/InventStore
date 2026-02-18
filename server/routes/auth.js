@@ -1,9 +1,10 @@
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import db from '../config/db.js';
+import Database from 'better-sqlite3';
 
 const router = express.Router();
+const db = new Database('database.db');
 
 router.post('/login', (req, res) => {
     const { username, password } = req.body;

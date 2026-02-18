@@ -2401,3 +2401,8 @@ function initInvoicesEventListeners() {
     }
 }
 
+// Función para cerrar modal de pago
+window.closePaymentModal = () => {
+    document.getElementById('payment-modal').classList.add('hidden');
+    document.getElementById('payment-form').reset();
+};
