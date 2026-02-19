@@ -1,5 +1,5 @@
 // Sistema robusto de conexión API con fallbacks y reintentos
-class APIClient {
+class RobustAPIClient {
     constructor() {
         this.baseURLs = this.getBaseURLs();
         this.currentURLIndex = 0;
@@ -260,6 +260,6 @@ class APIClient {
 }
 
 // Crear instancia global
-window.apiClient = new APIClient();
+window.apiClient = new RobustAPIClient();
 
 console.log('✅ API Client initialized with robust connection handling');

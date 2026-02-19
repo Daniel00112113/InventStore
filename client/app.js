@@ -150,8 +150,6 @@ if (document.readyState === 'loading') {
     });
 }
 
-}
-
 function initLogoutButton() {
     const logoutBtn = document.getElementById('logout-btn');
     if (logoutBtn) {
