@@ -21,8 +21,8 @@ class ErrorHandler {
     }
 
     handleError(error) {
-        // Si es un APIError, manejarlo específicamente
-        if (error instanceof APIError) {
+        // Verificar si es un error de API con estructura específica
+        if (error && typeof error === 'object' && error.status !== undefined) {
             return this.handleAPIError(error);
         }
 
@@ -37,31 +37,32 @@ class ErrorHandler {
 
     handleAPIError(error) {
         // Manejar errores de autenticación
-        if (error.isUnauthorized()) {
+        if (error.status === 401) {
             this.handleUnauthorized();
             return;
         }
 
         // Manejar errores de permisos
-        if (error.isForbidden()) {
+        if (error.status === 403) {
             this.showErrorNotification('No tienes permisos para realizar esta acción');
             return;
         }
 
         // Manejar errores de red
-        if (error.isNetworkError()) {
+        if (error.status === 0 || !error.status) {
             this.showErrorNotification('Error de conexión. Verifica tu internet.');
             return;
         }
 
         // Manejar errores del servidor
-        if (error.isServerError()) {
+        if (error.status >= 500) {
             this.showErrorNotification('Error del servidor. Intenta de nuevo más tarde.');
             return;
         }
 
         // Error específico de la API
-        this.showErrorNotification(error.message);
+        const message = error.error || error.message || 'Error desconocido';
+        this.showErrorNotification(message);
     }
 
     handleUnauthorized() {

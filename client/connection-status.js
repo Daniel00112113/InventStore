@@ -224,22 +224,24 @@ document.head.appendChild(style);
 // Inicializar monitor cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', () => {
     window.connectionMonitor = new ConnectionMonitor();
-});
 
-// Extender el API client para emitir eventos
-if (window.apiClient) {
-    const originalMakeRequest = window.apiClient.makeRequest;
-    window.apiClient.makeRequest = async function (...args) {
-        const result = await originalMakeRequest.apply(this, args);
+    // Extender el API client para emitir eventos cuando esté disponible
+    setTimeout(() => {
+        if (window.apiClient) {
+            const originalMakeRequest = window.apiClient.makeRequest;
+            window.apiClient.makeRequest = async function (...args) {
+                const result = await originalMakeRequest.apply(this, args);
 
-        if (result.success) {
-            window.dispatchEvent(new CustomEvent('api-success'));
-        } else {
-            window.dispatchEvent(new CustomEvent('api-error', { detail: result }));
+                if (result.success) {
+                    window.dispatchEvent(new CustomEvent('api-success'));
+                } else {
+                    window.dispatchEvent(new CustomEvent('api-error', { detail: result }));
+                }
+
+                return result;
+            };
         }
-
-        return result;
-    };
-}
+    }, 100);
+});
 
 console.log('✅ Connection Monitor initialized');

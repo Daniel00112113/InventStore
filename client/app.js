@@ -96,8 +96,8 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
         errorDiv.textContent = '';
         showDashboard();
     } catch (error) {
-        if (error instanceof APIError) {
-            errorDiv.textContent = error.message;
+        if (error && error.error) {
+            errorDiv.textContent = error.error;
         } else {
             errorDiv.textContent = 'Error de conexión';
         }

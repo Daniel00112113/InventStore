@@ -30,8 +30,8 @@ export function initLoginForm(onSuccess) {
             errorDiv.textContent = '';
             onSuccess();
         } catch (error) {
-            if (error instanceof APIError) {
-                errorDiv.textContent = error.message;
+            if (error && error.error) {
+                errorDiv.textContent = error.error;
             } else {
                 errorDiv.textContent = 'Error de conexión';
             }
