@@ -6,6 +6,13 @@ class APIClient {
         this.maxRetries = 3;
         this.timeout = 30000; // 30 segundos
         this.token = localStorage.getItem('token');
+
+        // Actualizar token cuando cambie en localStorage
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'token') {
+                this.token = e.newValue;
+            }
+        });
     }
 
     getBaseURLs() {
@@ -227,6 +234,13 @@ class APIClient {
         });
     }
 
+    async login(credentials) {
+        return this.makeRequest('/auth/login', {
+            method: 'POST',
+            body: credentials
+        });
+    }
+
     async getReports(filters = {}) {
         const queryString = new URLSearchParams(filters).toString();
         const endpoint = queryString ? `/reports?${queryString}` : '/reports';
@@ -247,18 +261,5 @@ class APIClient {
 
 // Crear instancia global
 window.apiClient = new APIClient();
-
-// Función de utilidad para mostrar errores
-window.handleAPIError = function (error, context = '') {
-    console.error(`API Error ${context}:`, error);
-
-    const message = error.error || error.message || 'Error de conexión';
-
-    if (window.showNotification) {
-        window.showNotification(message, 'error');
-    } else {
-        alert(`Error ${context}: ${message}`);
-    }
-};
 
 console.log('✅ API Client initialized with robust connection handling');

@@ -88,13 +88,21 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     const errorDiv = document.getElementById('login-error');
 
     try {
-        const data = await apiClient.post('/auth/login', { username, password });
+        const result = await window.apiClient.login({ username, password });
 
-        token = data.token;
-        currentUser = data.user;
-        localStorage.setItem('token', token);
-        errorDiv.textContent = '';
-        showDashboard();
+        if (result.success) {
+            token = result.data.token;
+            currentUser = result.data.user;
+            localStorage.setItem('token', token);
+
+            // Actualizar el token en el API client
+            window.apiClient.updateToken(token);
+
+            errorDiv.textContent = '';
+            showDashboard();
+        } else {
+            errorDiv.textContent = result.error || 'Error de autenticación';
+        }
     } catch (error) {
         if (error && error.error) {
             errorDiv.textContent = error.error;

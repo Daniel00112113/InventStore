@@ -110,3 +110,21 @@ window.errorHandler = errorHandler;
 window.handleError = (error, customMessage) => {
     errorHandler.handle(error, customMessage);
 };
+
+// Función específica para errores de API
+window.handleAPIError = function (error, context = '') {
+    console.error(`API Error ${context}:`, error);
+
+    let message;
+    if (error && typeof error === 'object') {
+        message = error.error || error.message || 'Error de conexión';
+    } else {
+        message = error || 'Error desconocido';
+    }
+
+    if (window.showNotification) {
+        window.showNotification(message, 'error');
+    } else {
+        alert(`Error ${context}: ${message}`);
+    }
+};
