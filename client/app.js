@@ -176,23 +176,25 @@ function initMenuNavigation() {
 
 async function loadDashboard() {
     try {
-        const res = await fetch(`${API_URL}/dashboard`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
+        const result = await window.apiClient.getDashboardData();
 
-        document.getElementById('daily-sales').textContent = `${data.dailySales.toLocaleString()}`;
-        document.getElementById('monthly-sales').textContent = `${data.monthlySales.toLocaleString()}`;
-        document.getElementById('monthly-profit').textContent = `${data.monthlyProfit.toLocaleString()}`;
-        document.getElementById('low-stock').textContent = data.lowStockCount;
-        document.getElementById('pending-credit').textContent = `${data.pendingCredit.toLocaleString()}`;
+        if (result.success) {
+            const data = result.data;
+            document.getElementById('daily-sales').textContent = `${data.dailySales.toLocaleString()}`;
+            document.getElementById('monthly-sales').textContent = `${data.monthlySales.toLocaleString()}`;
+            document.getElementById('monthly-profit').textContent = `${data.monthlyProfit.toLocaleString()}`;
+            document.getElementById('low-stock').textContent = data.lowStockCount;
+            document.getElementById('pending-credit').textContent = `${data.pendingCredit.toLocaleString()}`;
 
-        // Cargar gráficos del dashboard
-        if (typeof loadDashboardCharts === 'function') {
-            loadDashboardCharts();
+            // Cargar gráficos del dashboard
+            if (typeof loadDashboardCharts === 'function') {
+                loadDashboardCharts();
+            }
+        } else {
+            window.handleAPIError(result, 'cargando dashboard');
         }
     } catch (error) {
-        console.error('Error loading dashboard:', error);
+        window.handleAPIError(error, 'cargando dashboard');
     }
 }
 
@@ -200,26 +202,26 @@ async function loadDashboard() {
 // ========== PRODUCTS ==========
 async function loadProducts() {
     try {
-        const endpoint = showLowStockOnly ? `${API_URL}/products/low-stock` : `${API_URL}/products`;
-        const res = await fetch(endpoint, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const products = await res.json();
+        const filters = showLowStockOnly ? { lowStock: true } : {};
+        const result = await window.apiClient.getProducts(filters);
 
-        const presentationEmojis = {
-            'unidad': '📦',
-            'suelto': '🥄',
-            'paquete': '📦',
-            'bolsa': '🛍️',
-            'caja': '📦',
-            'botella': '🍾',
-            'lata': '🥫',
-            'kilo': '⚖️',
-            'libra': '⚖️'
-        };
+        if (result.success) {
+            const products = result.data;
 
-        const list = document.getElementById('products-list');
-        list.innerHTML = products.map(p => `
+            const presentationEmojis = {
+                'unidad': '📦',
+                'suelto': '🥄',
+                'paquete': '📦',
+                'bolsa': '🛍️',
+                'caja': '📦',
+                'botella': '🍾',
+                'lata': '🥫',
+                'kilo': '⚖️',
+                'libra': '⚖️'
+            };
+
+            const list = document.getElementById('products-list');
+            list.innerHTML = products.map(p => `
             <div class="list-item">
                 <div>
                     <strong>${p.name}</strong>
@@ -234,8 +236,11 @@ async function loadProducts() {
                 </div>
             </div>
         `).join('');
+        } else {
+            window.handleAPIError(result, 'cargando productos');
+        }
     } catch (error) {
-        console.error('Error loading products:', error);
+        window.handleAPIError(error, 'cargando productos');
     }
 }
 

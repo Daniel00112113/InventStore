@@ -13,38 +13,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addProductBtn) {
         addProductBtn.addEventListener('click', async () => {
             console.log('✅ Click en agregar producto');
-            // Cargar categorías
+
+            // Cargar categorías usando el nuevo API client
             try {
-                const token = localStorage.getItem('token');
-                const API_URL = window.CONFIG?.API_URL || window.API_URL || '/api';
+                const result = await window.apiClient.getCategories();
 
-                // Intentar múltiples endpoints por si hay bloqueo de ad blocker
-                let res;
-                try {
-                    res = await fetch(`${API_URL}/categories`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                } catch (firstError) {
-                    console.warn('Primer intento falló, probando ruta alternativa:', firstError);
-                    // Intentar con ruta alternativa
-                    res = await fetch(`${API_URL}/inventory/categories`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                }
-
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-                }
-
-                const categories = await res.json();
-
-                const select = document.getElementById('product-category');
-                if (select) {
-                    select.innerHTML = '<option value="">Sin categoría</option>' +
-                        categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                if (result.success) {
+                    const categories = result.data;
+                    const select = document.getElementById('product-category');
+                    if (select) {
+                        select.innerHTML = '<option value="">Sin categoría</option>' +
+                            categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+                    }
+                } else {
+                    window.handleAPIError(result, 'cargando categorías');
                 }
             } catch (error) {
-                console.error('Error cargando categorías:', error);
+                window.handleAPIError(error, 'cargando categorías');
             }
 
             const modalTitle = document.getElementById('product-modal-title');
@@ -147,16 +132,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (openClosingModalBtn) {
         openClosingModalBtn.addEventListener('click', async () => {
             console.log('✅ Click en cerrar caja');
-            // Cargar resumen del día
-            try {
-                const token = localStorage.getItem('token');
-                const API_URL = window.API_URL || 'http://localhost:3000/api';
-                const res = await fetch(`${API_URL}/cash-register/summary`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
 
-                if (res.ok) {
-                    const summary = await res.json();
+            // Cargar resumen del día usando el nuevo API client
+            try {
+                const result = await window.apiClient.getCashRegisterSummary();
+
+                if (result.success) {
+                    const summary = result.data;
 
                     const today = new Date().toLocaleDateString('es-CO', {
                         weekday: 'long',
@@ -174,9 +156,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (expectedCash) expectedCash.textContent = summary.expected_cash.toLocaleString('es-CO');
                     if (creditSales) creditSales.textContent = summary.credit_sales.toLocaleString('es-CO');
                     if (totalTransactions) totalTransactions.textContent = summary.total_transactions;
+                } else {
+                    window.handleAPIError(result, 'cargando resumen de caja');
                 }
             } catch (error) {
-                console.error('Error cargando resumen:', error);
+                window.handleAPIError(error, 'cargando resumen de caja');
             }
 
             if (closingModal) closingModal.classList.remove('hidden');

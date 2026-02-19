@@ -247,6 +247,13 @@ app.use('/api', salesRoutes);     // Handles /customers and /sales (invoices)
 // Rutas alternativas para evitar ad blockers
 app.use('/api/inventory', inventoryRoutes); // Alternative: /api/inventory/products, /api/inventory/categories
 app.use('/api/store', inventoryRoutes);     // Alternative: /api/store/products, /api/store/categories
+app.use('/api/data', inventoryRoutes);      // Alternative: /api/data/products, /api/data/categories
+app.use('/api/v1', inventoryRoutes);        // Alternative: /api/v1/products, /api/v1/categories
+
+// Rutas alternativas para ventas y clientes
+app.use('/api/store', salesRoutes);         // Alternative: /api/store/customers, /api/store/sales
+app.use('/api/data', salesRoutes);          // Alternative: /api/data/customers, /api/data/sales
+app.use('/api/v1', salesRoutes);            // Alternative: /api/v1/customers, /api/v1/sales
 
 // Headers de seguridad y performance
 app.use((req, res, next) => {

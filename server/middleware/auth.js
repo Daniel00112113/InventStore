@@ -4,19 +4,54 @@ import Database from 'better-sqlite3';
 const db = new Database('database.db');
 
 export const authenticate = (req, res, next) => {
-    // Intentar obtener token del header o query string
-    const token = req.headers.authorization?.split(' ')[1] || req.query.token;
-
-    if (!token) {
-        return res.status(401).json({ error: 'Token requerido' });
-    }
-
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
-        next();
+        // Intentar obtener token del header o query string
+        const token = req.headers.authorization?.split(' ')[1] || req.query.token;
+
+        if (!token) {
+            return res.status(401).json({
+                error: 'Token de acceso requerido',
+                code: 'NO_TOKEN'
+            });
+        }
+
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = decoded;
+            req.userId = decoded.userId;
+            req.storeId = decoded.storeId;
+            req.userRole = decoded.role;
+
+            // Log de acceso para debugging
+            console.log(`🔐 Auth: User ${decoded.userId} (${decoded.role}) accessing ${req.method} ${req.path}`);
+
+            next();
+        } catch (jwtError) {
+            console.warn('🚫 JWT verification failed:', jwtError.message);
+
+            if (jwtError.name === 'TokenExpiredError') {
+                return res.status(401).json({
+                    error: 'Token expirado. Por favor, inicia sesión nuevamente.',
+                    code: 'TOKEN_EXPIRED'
+                });
+            } else if (jwtError.name === 'JsonWebTokenError') {
+                return res.status(401).json({
+                    error: 'Token inválido',
+                    code: 'INVALID_TOKEN'
+                });
+            } else {
+                return res.status(401).json({
+                    error: 'Error de autenticación',
+                    code: 'AUTH_ERROR'
+                });
+            }
+        }
     } catch (error) {
-        return res.status(401).json({ error: 'Token inválido' });
+        console.error('🚨 Authentication middleware error:', error);
+        return res.status(500).json({
+            error: 'Error interno de autenticación',
+            code: 'INTERNAL_AUTH_ERROR'
+        });
     }
 };
 
