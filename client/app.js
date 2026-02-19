@@ -81,36 +81,76 @@ if (token) {
     showLogin();
 }
 
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const errorDiv = document.getElementById('login-error');
+// Función de inicialización principal
+function initApp() {
+    // Inicializar formulario de login
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('login-error');
 
-    try {
-        const result = await window.apiClient.login({ username, password });
+            try {
+                const result = await window.apiClient.login({ username, password });
 
-        if (result.success) {
-            token = result.data.token;
-            currentUser = result.data.user;
-            localStorage.setItem('token', token);
+                if (result.success) {
+                    token = result.data.token;
+                    currentUser = result.data.user;
+                    localStorage.setItem('token', token);
 
-            // Actualizar el token en el API client
-            window.apiClient.updateToken(token);
+                    // Actualizar el token en el API client
+                    window.apiClient.updateToken(token);
 
-            errorDiv.textContent = '';
-            showDashboard();
-        } else {
-            errorDiv.textContent = result.error || 'Error de autenticación';
-        }
-    } catch (error) {
-        if (error && error.error) {
-            errorDiv.textContent = error.error;
-        } else {
-            errorDiv.textContent = 'Error de conexión';
-        }
+                    errorDiv.textContent = '';
+                    showDashboard();
+                } else {
+                    errorDiv.textContent = result.error || 'Error de autenticación';
+                }
+            } catch (error) {
+                if (error && error.error) {
+                    errorDiv.textContent = error.error;
+                } else {
+                    errorDiv.textContent = 'Error de conexión';
+                }
+            }
+        });
     }
-});
+
+    // Inicializar botón de logout
+    initLogoutButton();
+
+    // Verificar si ya hay token y mostrar dashboard
+    if (token) {
+        window.apiClient.updateToken(token);
+        showDashboard();
+    }
+}
+
+// Esperar a que la app esté lista antes de inicializar
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.waitForApp((error) => {
+            if (error) {
+                console.error('❌ Error en inicialización:', error);
+                return;
+            }
+            initApp();
+        });
+    });
+} else {
+    // DOM ya está listo
+    window.waitForApp((error) => {
+        if (error) {
+            console.error('❌ Error en inicialización:', error);
+            return;
+        }
+        initApp();
+    });
+}
+
+}
 
 function initLogoutButton() {
     const logoutBtn = document.getElementById('logout-btn');
