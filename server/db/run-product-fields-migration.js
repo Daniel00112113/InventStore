@@ -1,33 +1,18 @@
+#!/usr/bin/env node
+
 import Database from 'better-sqlite3';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import bcrypt from 'bcrypt';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const db = new Database('database.db');
 
-// Leer y ejecutar schema
-const schema = readFileSync(join(__dirname, 'schema.sql'), 'utf-8');
-db.exec(schema);
+console.log('🔄 Ejecutando migración de campos de productos...');
 
-// Crear tienda base para super admin
-const storeStmt = db.prepare('INSERT INTO stores (name, owner_name, phone, address) VALUES (?, ?, ?, ?)');
-const storeResult = storeStmt.run('InvenStore System', 'Sistema', '', '');
-const storeId = storeResult.lastInsertRowid;
-
-// Crear usuario admin básico
-const passwordHash = bcrypt.hashSync('admin123', 10);
-const userStmt = db.prepare('INSERT INTO users (store_id, username, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)');
-userStmt.run(storeId, 'admin', passwordHash, 'Administrador', 'admin');
-
-// Crear SUPER ADMIN con rol correcto
-const superAdminPasswordHash = bcrypt.hashSync('superadmin123', 10);
-const superAdminStmt = db.prepare('INSERT INTO users (store_id, username, password_hash, full_name, role) VALUES (?, ?, ?, ?, ?)');
-superAdminStmt.run(storeId, 'superadmin', superAdminPasswordHash, 'Super Administrador', 'super_admin');
-
-// Ejecutar migración de campos de productos si es necesario
 try {
+    const db = new Database('database.db');
+
+    // Verificar si los campos ya existen
     const tableInfo = db.prepare("PRAGMA table_info(products)").all();
     const existingColumns = tableInfo.map(col => col.name);
 
@@ -42,9 +27,17 @@ try {
 
     const missingColumns = requiredColumns.filter(col => !existingColumns.includes(col));
 
-    if (missingColumns.length > 0) {
-        console.log(`🔄 Agregando campos faltantes a productos: ${missingColumns.join(', ')}`);
+    if (missingColumns.length === 0) {
+        console.log('✅ Todos los campos ya existen en la tabla products');
+        db.close();
+        process.exit(0);
+    }
 
+    console.log(`📝 Agregando campos faltantes: ${missingColumns.join(', ')}`);
+
+    // Ejecutar la migración en una transacción
+    const migrate = db.transaction(() => {
+        // Agregar cada campo faltante individualmente
         missingColumns.forEach(column => {
             try {
                 switch (column) {
@@ -69,21 +62,29 @@ try {
                 }
                 console.log(`  ✅ Campo '${column}' agregado`);
             } catch (error) {
-                if (!error.message.includes('duplicate column name')) {
+                if (error.message.includes('duplicate column name')) {
+                    console.log(`  ⚠️ Campo '${column}' ya existe`);
+                } else {
                     throw error;
                 }
             }
         });
-    }
+    });
+
+    migrate();
+
+    console.log('✅ Migración de campos de productos completada exitosamente');
+
+    // Verificar la estructura final
+    const finalTableInfo = db.prepare("PRAGMA table_info(products)").all();
+    console.log('📋 Estructura final de la tabla products:');
+    finalTableInfo.forEach(col => {
+        console.log(`  - ${col.name}: ${col.type} ${col.notnull ? 'NOT NULL' : ''} ${col.dflt_value ? `DEFAULT ${col.dflt_value}` : ''}`);
+    });
+
+    db.close();
+
 } catch (error) {
-    console.warn('⚠️ Error en migración de campos de productos:', error.message);
+    console.error('❌ Error en la migración:', error);
+    process.exit(1);
 }
-
-console.log('✅ Base de datos configurada exitosamente');
-console.log(`📦 Tienda Sistema ID: ${storeId}`);
-console.log('👤 Usuario admin: admin / admin123');
-console.log('🔑 Super Admin: superadmin / superadmin123');
-console.log('🌐 Super Admin Panel: /super-admin');
-console.log('📝 Nota: Sistema limpio sin datos demo');
-
-db.close();

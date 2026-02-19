@@ -247,16 +247,20 @@ async function loadProducts() {
 
 async function loadCategoriesForSelect() {
     try {
-        const res = await fetch(`${API_URL}/categories`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const categories = await res.json();
+        const result = await window.apiClient.getCategories();
 
-        const select = document.getElementById('product-category');
-        select.innerHTML = '<option value="">Sin categoría</option>' +
-            categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        if (result.success) {
+            const categories = result.data;
+            const select = document.getElementById('product-category');
+            if (select) {
+                select.innerHTML = '<option value="">Sin categoría</option>' +
+                    categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            }
+        } else {
+            window.handleAPIError(result, 'cargando categorías para selector');
+        }
     } catch (error) {
-        console.error('Error loading categories:', error);
+        window.handleAPIError(error, 'cargando categorías para selector');
     }
 }
 
@@ -320,27 +324,26 @@ function initProductsEventListeners() {
             };
 
             try {
-                const url = id ? `${API_URL}/products/${id}` : `${API_URL}/products`;
-                const method = id ? 'PUT' : 'POST';
+                let result;
+                if (id) {
+                    result = await window.apiClient.updateProduct(id, data);
+                } else {
+                    result = await window.apiClient.createProduct(data);
+                }
 
-                const res = await fetch(url, {
-                    method,
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (res.ok) {
+                if (result.success) {
                     const modal = document.getElementById('product-modal');
                     if (modal) modal.classList.add('hidden');
                     loadProducts();
+                    window.showNotification(
+                        id ? 'Producto actualizado exitosamente' : 'Producto creado exitosamente',
+                        'success'
+                    );
                 } else {
-                    alert('Error al guardar producto');
+                    window.handleAPIError(result, id ? 'actualizando producto' : 'creando producto');
                 }
             } catch (error) {
-                alert('Error de conexión');
+                window.handleAPIError(error, id ? 'actualizando producto' : 'creando producto');
             }
         });
     }

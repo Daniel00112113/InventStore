@@ -51,7 +51,7 @@ async function ensureDatabaseSetup() {
             const Database = (await import('better-sqlite3')).default;
             const db = new Database(dbPath);
 
-            // Verificar tabla stores
+            // Verificar tabla stores y campos de productos
             const storesTable = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='stores'").get();
             if (!storesTable) {
                 logger.info('🔧 Tablas no encontradas, ejecutando setup...');
@@ -60,8 +60,22 @@ async function ensureDatabaseSetup() {
                 execSync('node server/db/setup.js', { stdio: 'inherit' });
                 logger.info('✅ Setup de base de datos completado');
             } else {
-                db.close();
-                logger.info('✅ Base de datos verificada correctamente');
+                // Verificar campos de productos
+                const tableInfo = db.prepare("PRAGMA table_info(products)").all();
+                const existingColumns = tableInfo.map(col => col.name);
+                const requiredColumns = ['presentation', 'unit_type', 'units_per_pack', 'pack_price', 'wholesale_quantity', 'wholesale_price'];
+                const missingColumns = requiredColumns.filter(col => !existingColumns.includes(col));
+
+                if (missingColumns.length > 0) {
+                    logger.info('🔧 Campos faltantes en productos, ejecutando migración...');
+                    db.close();
+                    const { execSync } = await import('child_process');
+                    execSync('node server/db/run-product-fields-migration.js', { stdio: 'inherit' });
+                    logger.info('✅ Migración de productos completada');
+                } else {
+                    db.close();
+                    logger.info('✅ Base de datos verificada correctamente');
+                }
             }
         } catch (error) {
             logger.error('❌ Error verificando base de datos:', error);
